@@ -22,9 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
@@ -33,8 +30,6 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
-import org.apache.oozie.service.HadoopAccessorException;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.JobUtils;
@@ -160,18 +155,23 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             XLog.Info.get().setParameter(XLogService.GROUP, group);
             String wfPath = conf.get(OozieClient.APP_PATH);
             String coordPath = conf.get(OozieClient.COORDINATOR_APP_PATH);
-            if (wfPath == null && coordPath == null) {
-                String libPath = conf.get(OozieClient.LIBPATH);
+            String bundlePath = conf.get(OozieClient.BUNDLE_APP_PATH);
+
+            if (wfPath == null && coordPath == null && bundlePath == null) {
+                String libPath = conf.get(XOozieClient.LIBPATH);
                 conf.set(OozieClient.APP_PATH, libPath);
                 wfPath = libPath;
             }
-            ServletUtilities.ValidateAppPath(wfPath, coordPath);
+            ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
 
             if (wfPath != null) {
                 auth.authorizeForApp(user, group, wfPath, "workflow.xml", conf);
             }
-            else {
+            else if (coordPath != null){
                 auth.authorizeForApp(user, group, coordPath, "coordinator.xml", conf);
+            }
+            else if (bundlePath != null){
+                auth.authorizeForApp(user, group, bundlePath, "bundle.xml", conf);
             }
         }
         catch (AuthorizationException ex) {
@@ -179,7 +179,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
         }
     }
-    
+
     /**
      * Return information about jobs.
      */
