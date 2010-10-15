@@ -66,7 +66,6 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.workflow.WorkflowException;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -138,7 +137,7 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.Command#call(org.apache.oozie.store.Store)
      */
     @Override
@@ -748,14 +747,12 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
     }
 
     /**
-     * Read workflow definition.
+     * Read Coordinator definition.
      *
      * @param appPath application path.
-     * @param user user name.
-     * @param group group name.
-     * @param autToken authentication token.
-     * @return workflow definition.
-     * @throws WorkflowException thrown if the definition could not be read.
+     * @param fileName
+     * @return Coordinator definition.
+     * @throws CoordinatorJobException thrown if the definition could not be read.
      */
     protected String readDefinition(String appPath) throws CoordinatorJobException {
         String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
@@ -776,11 +773,11 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
         }
         catch (IOException ex) {
             log.warn("IOException :" + XmlUtils.prettyPrint(confHadoop), ex);
-            throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex); // TODO:
+            throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
             log.warn("URISyException :" + ex.getMessage());
-            throw new CoordinatorJobException(ErrorCode.E1002, appPath, ex.getMessage(), ex);// TODO:
+            throw new CoordinatorJobException(ErrorCode.E1002, appPath, ex.getMessage(), ex);
         }
         catch (HadoopAccessorException ex) {
             throw new CoordinatorJobException(ex);
