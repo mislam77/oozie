@@ -172,7 +172,7 @@ public enum ErrorCode {
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
 
     E1101(XLog.STD, "Could not read the bundle job definition, {0}"),
-    E1102(XLog.STD, "Invalid Bundle application URI [{0}], {1}"),
+    E1102(XLog.STD, "Invalid bundle application URI [{0}], {1}"),
     E1103(XLog.STD, "Invalid bundle application attributes [{0}], {1}"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
