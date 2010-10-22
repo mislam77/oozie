@@ -1176,4 +1176,12 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.command.default.lock.timeout</name>
+        <value>5000</value>
+        <description>
+            Default timeout (in milliseconds) for commands for acquiring an exclusive lock on an entity.
+        </description>
+    </property>
+
 </configuration>
