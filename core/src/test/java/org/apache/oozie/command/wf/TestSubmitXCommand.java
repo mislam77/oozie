@@ -27,7 +27,7 @@ import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.XLogService;
 
-public class TestSubmitCommand extends XFsTestCase {
+public class TestSubmitXCommand extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();

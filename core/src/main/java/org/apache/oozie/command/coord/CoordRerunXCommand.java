@@ -36,8 +36,14 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.jpa.CoordActionGetCommand;
+import org.apache.oozie.command.jpa.CoordJobGetActionForNominalTimeCommand;
+import org.apache.oozie.command.jpa.CoordJobGetActionsForDatesCommand;
+import org.apache.oozie.command.jpa.CoordJobGetCommand;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.store.CoordinatorStore;
+import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -48,17 +54,19 @@ import org.apache.oozie.util.db.SLADbOperations;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo> {
+public class CoordRerunXCommand extends CoordinatorXCommand<CoordinatorActionInfo> {
 
     private String jobId;
     private String rerunType;
     private String scope;
     private boolean refresh;
     private boolean noCleanup;
-    private final XLog log = XLog.getLog(getClass());
+    private static XLog log = XLog.getLog(CoordRerunXCommand.class);
+    private CoordinatorJobBean coordJob = null;
+    private JPAService jpaService = null;
 
-    public CoordRerunCommand(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup) {
-        super("coord_rerun", "coord_rerun", 1, XLog.STD);
+    public CoordRerunXCommand(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup) {
+        super("coord_rerun", "coord_rerun", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
         this.rerunType = ParamChecker.notEmpty(rerunType, "rerunType");
         this.scope = ParamChecker.notEmpty(scope, "scope");
@@ -67,53 +75,42 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
     }
 
     @Override
-    protected CoordinatorActionInfo call(CoordinatorStore store) throws StoreException, CommandException {
+    protected CoordinatorActionInfo execute() throws CommandException {
         try {
-            CoordinatorJobBean coordJob = store.getCoordinatorJob(jobId, false);
             CoordinatorActionInfo coordInfo = null;
-            setLogInfo(coordJob);
-            if (coordJob.getStatus() != CoordinatorJob.Status.KILLED
-                    && coordJob.getStatus() != CoordinatorJob.Status.FAILED) {
-                incrJobCounter(1);
-
-                List<CoordinatorActionBean> coordActions;
-                if (rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE)) {
-                    coordActions = getCoordActionsFromDates(jobId, scope, store);
-                }
-                else if (rerunType.equals(RestConstants.JOB_COORD_RERUN_ACTION)) {
-                    coordActions = getCoordActionsFromIds(jobId, scope, store);
-                }
-                else {
-                    throw new CommandException(ErrorCode.E1018, "date or action expected.");
-                }
-                if (checkAllActionsRunnable(coordActions)) {
-                    for (CoordinatorActionBean coordAction : coordActions) {
-                        String actionXml = coordAction.getActionXml();
-                        if (!noCleanup) {
-                            Element eAction = XmlUtils.parseXml(actionXml);
-                            cleanupOutputEvents(eAction, coordJob.getUser(), coordJob.getGroup());
-                        }
-                        if (refresh) {
-                            refreshAction(coordJob, coordAction, store);
-                        }
-                        updateAction(coordJob, coordAction, actionXml, store);
-
-                        // TODO: time 100s should be configurable
-                        queueCallable(new CoordActionNotificationCommand(coordAction), 100);
-                        queueCallable(new CoordActionInputCheckCommand(coordAction.getId()), 100);
-                    }
-                }
-                else {
-                    throw new CommandException(ErrorCode.E1018, "part or all actions are not eligible to rerun!");
-                }
-                coordInfo = new CoordinatorActionInfo(coordActions);
+            incrJobCounter(1);
+            List<CoordinatorActionBean> coordActions;
+            if (rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE)) {
+                coordActions = getCoordActionsFromDates(jobId, scope);
+            }
+            else if (rerunType.equals(RestConstants.JOB_COORD_RERUN_ACTION)) {
+                coordActions = getCoordActionsFromIds(jobId, scope);
             }
             else {
-                log.info("CoordRerunCommand is not able to run, job status=" + coordJob.getStatus() + ", jobid="
-                        + jobId);
-                throw new CommandException(ErrorCode.E1018,
-                        "coordinator job is killed or failed so all actions are not eligible to rerun!");
+                throw new CommandException(ErrorCode.E1018, "date or action expected.");
             }
+            if (checkAllActionsRunnable(coordActions)) {
+                for (CoordinatorActionBean coordAction : coordActions) {
+                    String actionXml = coordAction.getActionXml();
+                    if (!noCleanup) {
+                        Element eAction = XmlUtils.parseXml(actionXml);
+                        cleanupOutputEvents(eAction, coordJob.getUser(), coordJob.getGroup());
+                    }
+                    if (refresh) {
+                        refreshAction(coordJob, coordAction);
+                    }
+                    updateAction(coordJob, coordAction, actionXml);
+
+                    // TODO: time 100s should be configurable
+                    queue(new CoordActionNotificationXCommand(coordAction), 100);
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId()), 100);
+                }
+            }
+            else {
+                throw new CommandException(ErrorCode.E1018, "part or all actions are not eligible to rerun!");
+            }
+            coordInfo = new CoordinatorActionInfo(coordActions);
+
             return coordInfo;
         }
         catch (XException xex) {
@@ -137,7 +134,7 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
      * @throws CommandException
      * @throws StoreException
      */
-    private List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope, CoordinatorStore store)
+    private List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope)
             throws CommandException, StoreException {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
@@ -181,7 +178,7 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
 
         List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
         for (String id : actions) {
-            CoordinatorActionBean coordAction = store.getCoordinatorAction(id, false);
+            CoordinatorActionBean coordAction = jpaService.execute(new CoordActionGetCommand(id));
             coordActions.add(coordAction);
             log.debug("Rerun coordinator for actionId='" + id + "'");
         }
@@ -198,7 +195,7 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
      * @throws CommandException
      * @throws StoreException
      */
-    private List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope, CoordinatorStore store)
+    private List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope)
             throws CommandException, StoreException {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
@@ -225,7 +222,7 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
                     throw new CommandException(ErrorCode.E0302, e);
                 }
 
-                List<CoordinatorActionBean> listOfActions = getActionIdsFromDateRange(jobId, start, end, store);
+                List<CoordinatorActionBean> listOfActions = getActionIdsFromDateRange(jobId, start, end);
                 actionSet.addAll(listOfActions);
             }
             else {
@@ -237,7 +234,7 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
                     throw new CommandException(ErrorCode.E0302, e);
                 }
 
-                CoordinatorActionBean coordAction = store.getCoordActionForNominalTime(jobId, date);
+                CoordinatorActionBean coordAction = jpaService.execute(new CoordJobGetActionForNominalTimeCommand(jobId, date));
                 actionSet.add(coordAction);
             }
         }
@@ -250,10 +247,8 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
         return coordActions;
     }
 
-    private List<CoordinatorActionBean> getActionIdsFromDateRange(String jobId, Date start, Date end,
-            CoordinatorStore store)
-            throws StoreException {
-        List<CoordinatorActionBean> list = store.getCoordActionsForDates(jobId, start, end);
+    private List<CoordinatorActionBean> getActionIdsFromDateRange(String jobId, Date start, Date end) throws CommandException {
+        List<CoordinatorActionBean> list = jpaService.execute(new CoordJobGetActionsForDatesCommand(jobId, start, end));
         return list;
     }
 
@@ -317,7 +312,7 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
      * @param store
      * @throws Exception
      */
-    private void refreshAction(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction, CoordinatorStore store)
+    private void refreshAction(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction)
             throws Exception {
         Configuration jobConf = null;
         try {
@@ -345,15 +340,15 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
      * @param store
      * @throws Exception
      */
-    private void updateAction(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction, String actionXml,
-            CoordinatorStore store) throws Exception {
+    private void updateAction(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction, String actionXml) throws Exception {
         log.debug("updateAction for actionId=" + coordAction.getId());
         coordAction.setStatus(CoordinatorAction.Status.WAITING);
         coordAction.setExternalId("");
         coordAction.setExternalStatus("");
         coordAction.setRerunTime(new Date());
-        store.updateCoordinatorAction(coordAction);
-        writeActionRegistration(coordAction.getActionXml(), coordAction, store, coordJob.getUser(), coordJob.getGroup());
+        coordAction.setLastModifiedTime(new Date());
+        jpaService.execute(new org.apache.oozie.command.jpa.CoordActionUpdateCommand(coordAction));
+        writeActionRegistration(coordAction.getActionXml(), coordAction, coordJob.getUser(), coordJob.getGroup());
     }
 
     /**
@@ -366,37 +361,44 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
      * @param group
      * @throws Exception
      */
-    private void writeActionRegistration(String actionXml, CoordinatorActionBean actionBean, CoordinatorStore store,
+    private void writeActionRegistration(String actionXml, CoordinatorActionBean actionBean,
             String user, String group)
             throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml);
         Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
-        SLADbOperations.writeSlaRegistrationEvent(eSla, store, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, user,
-                group);
+        SLADbOperations.writeSlaRegistrationEvent(eSla, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, user,
+                group, log);
     }
 
     @Override
-    protected CoordinatorActionInfo execute(CoordinatorStore store) throws StoreException, CommandException {
-        log.info("STARTED CoordRerunCommand for jobId=" + jobId + ", scope=" + scope);
-        CoordinatorActionInfo coordInfo = null;
-        try {
-            if (lock(jobId)) {
-                coordInfo = call(store);
-            }
-            else {
-                queueCallable(new CoordResumeCommand(jobId), LOCK_FAILURE_REQUEUE_INTERVAL);
-                log.warn("CoordRerunCommand lock was not acquired - " + " failed " + jobId + ". Requeing the same.");
-            }
+    protected String getEntityKey() {
+        return jobId;
+    }
+
+    @Override
+    protected boolean isLockRequired() {
+        return true;
+    }
+
+    @Override
+    protected void loadState() throws CommandException {
+        jpaService = Services.get().get(JPAService.class);
+        if (jpaService == null) {
+            throw new CommandException(ErrorCode.E0610);
         }
-        catch (InterruptedException e) {
-            queueCallable(new CoordResumeCommand(jobId), LOCK_FAILURE_REQUEUE_INTERVAL);
-            log.warn("CoordRerunCommand lock acquiring failed " + " with exception " + e.getMessage() + " for job id "
-                    + jobId + ". Requeing the same.");
+        coordJob = jpaService.execute(new CoordJobGetCommand(jobId));
+        setLogInfo(coordJob);
+    }
+
+    @Override
+    protected void verifyPrecondition() throws CommandException, PreconditionException {
+        if (coordJob.getStatus() == CoordinatorJob.Status.KILLED
+                || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
+            log.info("CoordRerunCommand is not able to run, job status=" + coordJob.getStatus() + ", jobid="
+                    + jobId);
+            throw new CommandException(ErrorCode.E1018,
+                    "coordinator job is killed or failed so all actions are not eligible to rerun!");
         }
-        finally {
-            log.info("ENDED CoordRerunCommand for jobId=" + jobId + ", scope=" + scope);
-        }
-        return coordInfo;
     }
 
 }

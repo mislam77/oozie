@@ -26,13 +26,14 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.jpa.CoordActionGetCommand;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.Instrumentation;
@@ -42,88 +43,68 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
-public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
+public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     private String actionId;
-    private final XLog log = XLog.getLog(getClass());
+    private static XLog log = XLog.getLog(CoordActionInputCheckXCommand.class);
     private int COMMAND_REQUEUE_INTERVAL = 60000; // 1 minute
     private CoordinatorActionBean coordAction = null;
+    private JPAService jpaService = null;
 
-    public CoordActionInputCheckCommand(String actionId) {
-        super("coord_action_input", "coord_action_input", 1, XLog.STD);
+    public CoordActionInputCheckXCommand(String actionId) {
+        super("coord_action_input", "coord_action_input", 1);
         this.actionId = actionId;
     }
 
     @Override
-    protected Void call(CoordinatorStore store) throws StoreException, CommandException {
-        log.debug("After store.get() for action ID " + actionId + " : " + coordAction.getStatus());
-        // this action should only get processed if current time >
-        // materialization time
-        // otherwise, requeue this action after 30 seconds
-        Date nominalTime = coordAction.getNominalTime();
-        Date currentTime = new Date();
-        if (nominalTime.compareTo(currentTime) > 0) {
-            log.info("[" + actionId
-                    + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
-                    + currentTime + ", nominal=" + nominalTime);
-            queueCallable(new CoordActionInputCheckCommand(coordAction.getId()), Math.max(
-                    (nominalTime.getTime() - currentTime.getTime()), COMMAND_REQUEUE_INTERVAL));
-            // update lastModifiedTime
-            store.updateCoordinatorAction(coordAction);
-            return null;
-        }
-        if (coordAction.getStatus() == CoordinatorActionBean.Status.WAITING) {
-            log.info("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
-            StringBuilder actionXml = new StringBuilder(coordAction.getActionXml());// job.getXml();
-            Instrumentation.Cron cron = new Instrumentation.Cron();
-            try {
-                Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
-                cron.start();
-                StringBuilder existList = new StringBuilder();
-                StringBuilder nonExistList = new StringBuilder();
-                StringBuilder nonResolvedList = new StringBuilder();
-                CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList,
-                                                              nonResolvedList);
+    protected Void execute() throws CommandException {
+        log.info("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
+        StringBuilder actionXml = new StringBuilder(coordAction.getActionXml());// job.getXml();
+        Instrumentation.Cron cron = new Instrumentation.Cron();
+        try {
+            Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
+            cron.start();
+            StringBuilder existList = new StringBuilder();
+            StringBuilder nonExistList = new StringBuilder();
+            StringBuilder nonResolvedList = new StringBuilder();
+            CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList,
+                                                          nonResolvedList);
 
-                log.info("[" + actionId + "]::ActionInputCheck:: Missing deps:" + nonExistList.toString() + " "
-                        + nonResolvedList.toString());
-                Date actualTime = new Date();
-                boolean status = checkInput(actionXml, existList, nonExistList, actionConf, actualTime);
-                coordAction.setLastModifiedTime(actualTime);
-                coordAction.setActionXml(actionXml.toString());
-                if (nonResolvedList.length() > 0 && status == false) {
-                    nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(
-                            nonResolvedList);
-                }
-                coordAction.setMissingDependencies(nonExistList.toString());
-                if (status == true) {
-                    coordAction.setStatus(CoordinatorAction.Status.READY);
-                    // pass jobID to the ReadyCommand
-                    queueCallable(new CoordActionReadyCommand(coordAction.getJobId()), 100);
+            log.info("[" + actionId + "]::ActionInputCheck:: Missing deps:" + nonExistList.toString() + " "
+                    + nonResolvedList.toString());
+            Date actualTime = new Date();
+            boolean status = checkInput(actionXml, existList, nonExistList, actionConf, actualTime);
+            coordAction.setLastModifiedTime(actualTime);
+            coordAction.setActionXml(actionXml.toString());
+            if (nonResolvedList.length() > 0 && status == false) {
+                nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(
+                        nonResolvedList);
+            }
+            coordAction.setMissingDependencies(nonExistList.toString());
+            if (status == true) {
+                coordAction.setStatus(CoordinatorAction.Status.READY);
+                // pass jobID to the ReadyCommand
+                queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
+            }
+            else {
+                long waitingTime = (actualTime.getTime() - coordAction.getNominalTime().getTime()) / (60 * 1000);
+                int timeOut = coordAction.getTimeOut();
+                if ((timeOut >= 0) && (waitingTime > timeOut)) {
+                    queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                    coordAction.setStatus(CoordinatorAction.Status.TIMEDOUT);
                 }
                 else {
-                    long waitingTime = (actualTime.getTime() - coordAction.getNominalTime().getTime()) / (60 * 1000);
-                    int timeOut = coordAction.getTimeOut();
-                    if ((timeOut >= 0) && (waitingTime > timeOut)) {
-                        queueCallable(new CoordActionTimeOutCommand(coordAction), 100);
-                        coordAction.setStatus(CoordinatorAction.Status.TIMEDOUT);
-                    }
-                    else {
-                        queueCallable(new CoordActionInputCheckCommand(coordAction.getId()), COMMAND_REQUEUE_INTERVAL);
-                    }
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId()), COMMAND_REQUEUE_INTERVAL);
                 }
-                store.updateCoordActionMin(coordAction);
             }
-            catch (Exception e) {
-                log.warn(actionId + ": Exception occurs: " + e + " STORE is active " + store.isActive(), e);
-                throw new CommandException(ErrorCode.E1005, e.getMessage(), e);
-            }
-            cron.stop();
+            coordAction.setLastModifiedTime(new Date());
+            jpaService.execute(new org.apache.oozie.command.jpa.CoordActionUpdateCommand(coordAction));
         }
-        else {
-            log.info("[" + actionId + "]::ActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
-                    + coordAction.getStatus());
+        catch (Exception e) {
+            throw new CommandException(ErrorCode.E1005, e.getMessage(), e);
         }
+        cron.stop();
+
         return null;
     }
 
@@ -350,32 +331,6 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         return uris.toString();
     }
 
-    @Override
-    protected Void execute(CoordinatorStore store) throws StoreException, CommandException {
-        log.info("STARTED CoordActionInputCheckCommand for actionid=" + actionId);
-        try {
-            coordAction = store.getEntityManager().find(CoordinatorActionBean.class, actionId);
-            setLogInfo(coordAction);
-            if (lock(coordAction.getJobId())) {
-                call(store);
-            }
-            else {
-                queueCallable(new CoordActionInputCheckCommand(actionId), LOCK_FAILURE_REQUEUE_INTERVAL);
-                log.warn("CoordActionInputCheckCommand lock was not acquired - failed jobId=" + coordAction.getJobId()
-                        + ", actionId=" + actionId + ". Requeing the same.");
-            }
-        }
-        catch (InterruptedException e) {
-            queueCallable(new CoordActionInputCheckCommand(actionId), LOCK_FAILURE_REQUEUE_INTERVAL);
-            log.warn("CoordActionInputCheckCommand lock acquiring failed with exception " + e.getMessage() + " for jobId="
-                    + coordAction.getJobId() + ", actionId=" + actionId + " Requeing the same.");
-        }
-        finally {
-            log.info("ENDED CoordActionInputCheckCommand for actionid=" + actionId);
-        }
-        return null;
-    }
-
     /**
      * @param args
      * @throws Exception
@@ -384,11 +339,61 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         new Services().init();
         String actionId = "0000000-091221141623042-oozie-dani-C@4";
         try {
-            new CoordActionInputCheckCommand(actionId).call();
+            new CoordActionInputCheckXCommand(actionId).call();
             Thread.sleep(10000);
         }
         finally {
             new Services().destroy();
+        }
+    }
+
+    @Override
+    protected String getEntityKey() {
+        return coordAction.getJobId();
+    }
+
+    @Override
+    protected boolean isLockRequired() {
+        return true;
+    }
+
+    @Override
+    protected void eagerLoadState() throws CommandException {
+        jpaService = Services.get().get(JPAService.class);
+        if (jpaService == null) {
+            throw new CommandException(ErrorCode.E0610);
+        }
+        coordAction = jpaService.execute(new CoordActionGetCommand(actionId));
+        setLogInfo(coordAction);
+    }
+    
+    @Override
+    protected void loadState() throws CommandException {
+
+    }
+
+    @Override
+    protected void verifyPrecondition() throws CommandException, PreconditionException {
+        // this action should only get processed if current time >
+        // materialization time
+        // otherwise, requeue this action after 30 seconds
+        Date nominalTime = coordAction.getNominalTime();
+        Date currentTime = new Date();
+        if (nominalTime.compareTo(currentTime) > 0) {
+            queue(new CoordActionInputCheckXCommand(coordAction.getId()), Math.max(
+                    (nominalTime.getTime() - currentTime.getTime()), COMMAND_REQUEUE_INTERVAL));
+            // update lastModifiedTime
+            coordAction.setLastModifiedTime(new Date());
+            jpaService.execute(new org.apache.oozie.command.jpa.CoordActionUpdateCommand(coordAction));
+            
+            throw new PreconditionException(ErrorCode.E1100, "[" + actionId
+                    + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
+                    + currentTime + ", nominal=" + nominalTime);
+        }
+        
+        if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
+            throw new PreconditionException(ErrorCode.E1100, "[" + actionId + "]::ActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
+                    + coordAction.getStatus());
         }
     }
 

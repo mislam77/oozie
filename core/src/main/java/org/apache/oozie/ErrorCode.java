@@ -163,6 +163,8 @@ public enum ErrorCode {
     E1016(XLog.STD, "Cannot change a killed coordinator job"),
     E1017(XLog.STD, "Cannot change a workflow job"),
     E1018(XLog.STD, "Coord Job Rerun Error: {0}"),
+    
+    E1100(XLog.STD, "Command precondition does not hold before execution"),
 
     E1101(XLog.STD, "SLA Nominal time is required."),
     E1102(XLog.STD, "SLA should-start can't be empty."),

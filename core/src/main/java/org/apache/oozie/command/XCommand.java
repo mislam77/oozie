@@ -218,7 +218,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @throws Exception thrown if the command could not be executed.
      */
     @Override
-    public final T call() throws Exception {
+    public final T call() throws CommandException {
         if (used) {
             throw new IllegalStateException("XCommand already used");
         }
@@ -286,7 +286,7 @@ public abstract class XCommand<T> implements XCallable<T> {
         }
         catch (Exception ex) {
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".exceptions", 1);
-            throw ex;
+            throw new CommandException(ErrorCode.E0607, ex);
         }
         finally {
             callCron.stop();
