@@ -28,8 +28,6 @@ public class WorkflowActionInfoCommand extends WorkflowCommand<WorkflowActionBea
         this.id = ParamChecker.notEmpty(id, "id");
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
     protected WorkflowActionBean call(WorkflowStore store) throws StoreException {
         WorkflowActionBean action = store.getAction(id, false);
         return action;

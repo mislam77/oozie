@@ -29,7 +29,7 @@ import org.apache.oozie.command.wf.JobsCommand;
 import org.apache.oozie.command.wf.KillCommand;
 import org.apache.oozie.command.wf.ReRunCommand;
 import org.apache.oozie.command.wf.ResumeCommand;
-import org.apache.oozie.command.wf.SubmitCommand;
+import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.command.wf.SubmitHttpCommand;
 import org.apache.oozie.command.wf.SubmitPigCommand;
 import org.apache.oozie.command.wf.SubmitMRCommand;
@@ -38,6 +38,7 @@ import org.apache.oozie.command.wf.SuspendCommand;
 import org.apache.oozie.command.wf.DefinitionCommand;
 import org.apache.oozie.command.wf.ExternalIdCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoCommand;
+import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.util.ParamChecker;
@@ -90,7 +91,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws DagEngineException {
         validateSubmitConfiguration(conf);
-        SubmitCommand submit = new SubmitCommand(conf, getAuthToken());
+        SubmitXCommand submit = new SubmitXCommand(conf, getAuthToken());
         try {
             String jobId = submit.call();
             if (startJob) {
@@ -473,7 +474,7 @@ public class DagEngine extends BaseEngine {
 
     public WorkflowActionBean getWorkflowAction(String actionId) throws BaseEngineException {
         try {
-            return new WorkflowActionInfoCommand(actionId).call();
+            return new WorkflowActionInfoXCommand(actionId).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);

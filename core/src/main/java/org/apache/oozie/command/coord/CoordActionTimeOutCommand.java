@@ -25,11 +25,11 @@ import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.XLog;
 
-public class CoordActionTimeOut extends CoordinatorCommand<Void> {
+public class CoordActionTimeOutCommand extends CoordinatorCommand<Void> {
     private CoordinatorActionBean actionBean;
     private final XLog log = XLog.getLog(getClass());
 
-    public CoordActionTimeOut(CoordinatorActionBean actionBean) {
+    public CoordActionTimeOutCommand(CoordinatorActionBean actionBean) {
         super("coord_action_timeout", "coord_action_timeout", 1, XLog.STD);
         this.actionBean = actionBean;
     }
@@ -40,7 +40,7 @@ public class CoordActionTimeOut extends CoordinatorCommand<Void> {
         actionBean = store.getEntityManager().find(CoordinatorActionBean.class, actionBean.getId());
         if (actionBean.getStatus() == CoordinatorAction.Status.WAITING) {
             actionBean.setStatus(CoordinatorAction.Status.TIMEDOUT);
-            queueCallable(new CoordActionNotification(actionBean), 100);
+            queueCallable(new CoordActionNotificationCommand(actionBean), 100);
             store.updateCoordinatorAction(actionBean);
         }
         return null;
@@ -57,13 +57,13 @@ public class CoordActionTimeOut extends CoordinatorCommand<Void> {
                 call(store);
             }
             else {
-                queueCallable(new CoordActionTimeOut(actionBean), LOCK_FAILURE_REQUEUE_INTERVAL);
+                queueCallable(new CoordActionTimeOutCommand(actionBean), LOCK_FAILURE_REQUEUE_INTERVAL);
                 log.warn("CoordinatorActionTimeOut lock was not acquired - " + " failed " + jobId
                         + ". Requeing the same.");
             }
         }
         catch (InterruptedException e) {
-            queueCallable(new CoordActionTimeOut(actionBean), LOCK_FAILURE_REQUEUE_INTERVAL);
+            queueCallable(new CoordActionTimeOutCommand(actionBean), LOCK_FAILURE_REQUEUE_INTERVAL);
             log.warn("CoordinatorActionTimeOut lock acquiring failed " + " with exception " + e.getMessage()
                     + " for job id " + jobId + ". Requeing the same.");
         }

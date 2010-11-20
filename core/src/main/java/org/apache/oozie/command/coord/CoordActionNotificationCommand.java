@@ -29,7 +29,7 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 
-public class CoordActionNotification extends CoordinatorCommand<Void> {
+public class CoordActionNotificationCommand extends CoordinatorCommand<Void> {
 
     private CoordinatorActionBean actionBean;
     private static final String STATUS_PATTERN = "\\$status";
@@ -38,7 +38,7 @@ public class CoordActionNotification extends CoordinatorCommand<Void> {
     private int retries = 0;
     private final XLog log = XLog.getLog(getClass());
 
-	public CoordActionNotification(CoordinatorActionBean actionBean) {
+	public CoordActionNotificationCommand(CoordinatorActionBean actionBean) {
 		super("coord_action_notification", "coord_action_notification", 0,
 				XLog.STD);
 		this.actionBean = actionBean;

@@ -20,72 +20,33 @@ import java.util.Date;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.CoordinatorAction.Status;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.jpa.CoordActionGetCommand;
+import org.apache.oozie.command.jpa.CoordJobInsertCommand;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.StoreService;
-import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.store.StoreException;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XConfiguration;
 
-public class TestCoordActionInputCheck extends XTestCase {
-    private Services services;
-
-    protected void setUp() throws Exception {
-        super.setUp();
-        services = new Services();
-        services.init();
-        cleanUpDBTables();
-    }
-
-    protected void tearDown() throws Exception {
-        services.destroy();
-        super.tearDown();
-    }
-
+public class TestCoordActionInputCheckXCommand extends CoordXTestCase {
     public void testActionInputCheck() throws Exception {
         String jobId = "0000000-" + new Date().getTime() + "-testActionInputCheck-C";
-        CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
-        try {
-            addRecordToJobTable(jobId, store);
-            // addRecordToActionTable(jobId, 1, store);
-        }
-        finally {
-            store.closeTrx();
-        }
+        addRecordToJobTable(jobId);
+
         Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
         Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
-        new CoordActionMaterializeCommand(jobId, startTime, endTime).call();
+        new CoordActionMaterializeXCommand(jobId, startTime, endTime).call();
         createDir(getTestCaseDir() + "/2009/29/");
         createDir(getTestCaseDir() + "/2009/15/");
-        new CoordActionInputCheckCommand(jobId + "@1").call();
+        new CoordActionInputCheckXCommand(jobId + "@1").call();
         checkCoordAction(jobId + "@1");
     }
 
-    private void addRecordToActionTable(String jobId, int actionNum, CoordinatorStore store) throws StoreException {
-        // CoordinatorStore store = new CoordinatorStore(false);
-        CoordinatorActionBean action = new CoordinatorActionBean();
-        action.setJobId(jobId);
-        action.setId(jobId + "@" + actionNum);
-        action.setActionNumber(actionNum);
-        action.setNominalTime(new Date());
-        action.setLastModifiedTime(new Date());
-        action.setStatus(Status.WAITING);
-        // action.setActionXml("");
-        store.beginTrx();
-        store.insertCoordinatorAction(action);
-        store.commitTrx();
-    }
-
-    private void addRecordToJobTable(String jobId, CoordinatorStore store) throws StoreException {
-        // CoordinatorStore store = new CoordinatorStore(false);
+    private void addRecordToJobTable(String jobId) throws CommandException {
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(jobId);
         coordJob.setAppName("testApp");
@@ -163,24 +124,24 @@ public class TestCoordActionInputCheck extends XTestCase {
             fail("Could not set Date/time");
         }
 
-        try {
-            store.beginTrx();
-            store.insertCoordinatorJob(coordJob);
-            store.commitTrx();
+
+        /*
+        store.beginTrx();
+        store.insertCoordinatorJob(coordJob);
+        store.commitTrx();
+        */
+        JPAService jpaService = Services.get().get(JPAService.class);
+        if (jpaService != null) {
+            jpaService.execute(new CoordJobInsertCommand(coordJob));
         }
-        catch (StoreException se) {
-            se.printStackTrace();
-            store.rollbackTrx();
+        else {
             fail("Unable to insert the test job record to table");
-            throw se;
         }
     }
 
-    private void checkCoordAction(String actionId) throws StoreException {
-        CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+    private void checkCoordAction(String actionId) {
         try {
-            store.beginTrx();
-            CoordinatorActionBean action = store.getCoordinatorAction(actionId, true);
+            CoordinatorActionBean action = jpaService.execute(new CoordActionGetCommand(actionId));
             System.out.println("missingDeps " + action.getMissingDependencies() + " Xml " + action.getActionXml());
             if (action.getMissingDependencies().indexOf("/2009/29/") >= 0) {
                 fail("directory should be resolved :" + action.getMissingDependencies());
@@ -188,13 +149,9 @@ public class TestCoordActionInputCheck extends XTestCase {
             if (action.getMissingDependencies().indexOf("/2009/15/") < 0) {
                 fail("directory should NOT be resolved :" + action.getMissingDependencies());
             }
-            store.commitTrx();
         }
-        catch (StoreException se) {
+        catch (CommandException se) {
             fail("Action ID " + actionId + " was not stored properly in db");
-        }
-        finally {
-            store.closeTrx();
         }
     }
 

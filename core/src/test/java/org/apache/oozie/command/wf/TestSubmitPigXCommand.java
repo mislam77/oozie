@@ -26,7 +26,7 @@ import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.service.XLogService;
 import org.jdom.Element;
 
-public class TestSubmitPigCommand extends XFsTestCase {
+public class TestSubmitPigXCommand extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();

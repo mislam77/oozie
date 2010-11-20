@@ -27,7 +27,7 @@ import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.XLogService;
 
-public class TestSubmitCommand extends XFsTestCase {
+public class TestSubmitXCommand extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -77,9 +77,7 @@ public class TestSubmitCommand extends XFsTestCase {
         conf.set(OozieClient.APP_PATH, appPath+"/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
-
-        injectKerberosInfo(conf);
-        SubmitCommand sc = new SubmitCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
         try {
             sc.call();
@@ -101,9 +99,7 @@ public class TestSubmitCommand extends XFsTestCase {
         conf.set(OozieClient.APP_PATH, appPath+"/test.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
-
-        injectKerberosInfo(conf);
-        SubmitCommand sc = new SubmitCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
         try {
             sc.call();

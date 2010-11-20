@@ -123,9 +123,6 @@ public abstract class WorkflowActionXCommand<T> extends WorkflowXCommand<Void> {
         try {
             new SuspendXCommand(id).call();
         }
-        catch (WorkflowException e) {
-            throw new CommandException(e);
-        }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0727,e.getMessage());
         }
