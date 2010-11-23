@@ -15,15 +15,14 @@
 package org.apache.oozie.command.jpa;
 
 import java.util.Date;
-
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.workflow.WorkflowInstance;
 
-public class TestWorkflowJobGetCommand extends XDataTestCase {
+public class TestWorkflowActionUpdateCommand extends XDataTestCase {
     Services services;
 
     @Override
@@ -32,27 +31,35 @@ public class TestWorkflowJobGetCommand extends XDataTestCase {
         services = new Services();
         services.init();
         cleanUpDBTables();
+        LocalOozie.start();
     }
 
     @Override
     protected void tearDown() throws Exception {
+        LocalOozie.stop();
         services.destroy();
         super.tearDown();
     }
 
-    public void testWfJobGet() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestWorkflowJobGetCommand-W";
-        addRecordToWfJobTable(wfId, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-        _testGetJob(wfId);
+    public void testWorkflowActionUpdate() throws Exception {
+        String jobId = "00000-" + new Date().getTime() + "-TestWorkflowActionUpdateCommand-C";
+        int actionNum = 1;
+        String actionId = addRecordToWfActionTable(jobId, actionNum, WorkflowAction.Status.PREP);
+        _testUpdateAction(actionId);
     }
 
-    private void _testGetJob(String jobId) throws Exception {
+    private void _testUpdateAction(String actionId) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobGetCommand wfGetCmd = new WorkflowJobGetCommand(jobId);
-        WorkflowJobBean ret = jpaService.execute(wfGetCmd);
-        assertNotNull(ret);
-        assertEquals(ret.getId(), jobId);
+
+        WorkflowActionGetCommand actionGetCmd = new WorkflowActionGetCommand(actionId);
+        WorkflowActionBean action1 = jpaService.execute(actionGetCmd);
+        action1.setStatus(WorkflowAction.Status.RUNNING);
+        WorkflowActionUpdateCommand wfActionUpdateCmd = new WorkflowActionUpdateCommand(action1);
+        jpaService.execute(wfActionUpdateCmd);
+
+        WorkflowActionBean action2 = jpaService.execute(actionGetCmd);
+        assertEquals(action2.getStatus(), WorkflowAction.Status.RUNNING);
     }
 
 }

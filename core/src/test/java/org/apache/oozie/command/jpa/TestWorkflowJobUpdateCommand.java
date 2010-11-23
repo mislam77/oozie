@@ -16,25 +16,14 @@ package org.apache.oozie.command.jpa;
 
 import java.util.Date;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.test.XFsTestCase;
-import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.workflow.WorkflowApp;
+import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
-import org.apache.oozie.workflow.WorkflowLib;
-import org.apache.oozie.workflow.lite.EndNodeDef;
-import org.apache.oozie.workflow.lite.LiteWorkflowApp;
-import org.apache.oozie.workflow.lite.StartNodeDef;
 
-public class TestWorkflowJobUpdateCommand extends XFsTestCase {
+public class TestWorkflowJobUpdateCommand extends XDataTestCase {
     Services services;
 
     @Override
@@ -52,14 +41,14 @@ public class TestWorkflowJobUpdateCommand extends XFsTestCase {
     }
 
     public void testWorkflowJobUpdate() throws Exception {
-        String wfId = insertWF();
-        assertNotNull(wfId);
-        
+        String wfId = "00000-" + new Date().getTime() + "-TestWorkflowJobUpdateCommand-C";
+        addRecordToWfJobTable(wfId, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         WorkflowJobGetCommand wfGetCmd = new WorkflowJobGetCommand(wfId);
         WorkflowJobBean wfBean = jpaService.execute(wfGetCmd);
-        
+
         // first update;
         wfBean.setStatus(WorkflowJob.Status.SUCCEEDED);
         WorkflowJobUpdateCommand wfUpdateCmd1 = new WorkflowJobUpdateCommand(wfBean);
@@ -78,53 +67,4 @@ public class TestWorkflowJobUpdateCommand extends XFsTestCase {
         assertEquals(wfBean2.getStatusStr(), "RUNNING");
     }
 
-    private String insertWF() throws Exception {
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
-        Configuration conf = new Configuration();
-
-        conf.set(OozieClient.APP_PATH, "testPath");
-        conf.set(OozieClient.LOG_TOKEN, "testToken");
-        conf.set(OozieClient.USER_NAME, "testUser1");
-        conf.set(OozieClient.GROUP_NAME, "testGroup1");
-        conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "JT");
-        conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "NN");
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth");
-
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
-            WorkflowJobInsertCommand wfInsertCmd = new WorkflowJobInsertCommand(wfBean);
-            jpaService.execute(wfInsertCmd);
-            return wfBean.getId();
-        }
-        catch (CommandException ce) {
-            ce.printStackTrace();
-            fail("Unable to insert the test job record to table");
-            throw ce;
-        }
-    }
-
-    private WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken) throws Exception {
-        WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        Configuration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
-        WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
-        WorkflowInstance wfInstance;
-        wfInstance = workflowLib.createInstance(app, conf);
-        WorkflowJobBean workflow = new WorkflowJobBean();
-        workflow.setId(wfInstance.getId());
-        workflow.setAppName(app.getName());
-        workflow.setAppPath(conf.get(OozieClient.APP_PATH));
-        workflow.setConf(XmlUtils.prettyPrint(conf).toString());
-        workflow.setProtoActionConf(XmlUtils.prettyPrint(protoActionConf).toString());
-        workflow.setCreatedTime(new Date());
-        workflow.setLogToken(conf.get(OozieClient.LOG_TOKEN, ""));
-        workflow.setStatus(WorkflowJob.Status.PREP);
-        workflow.setRun(0);
-        workflow.setUser(conf.get(OozieClient.USER_NAME));
-        workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken(authToken);
-        workflow.setWorkflowInstance(wfInstance);
-        return workflow;
-    }
 }

@@ -39,6 +39,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.Services;
@@ -96,20 +97,20 @@ public abstract class XTestCase extends TestCase {
      */
     public static final String HADOOP_VERSION = "hadoop.version";
 
-    /** 
+    /**
      * System property that specifies the user that test oozie instance runs as.
      * The value of this property defaults to the "${user.name} system property.
      */
     public static final String TEST_OOZIE_USER_PROP = "oozie.test.user.oozie";
 
     /**
-     * System property that specifies the default test user name used by 
+     * System property that specifies the default test user name used by
      * the tests. The defalt value of this property is <tt>test</tt>.
      */
     public static final String TEST_USER1_PROP = "oozie.test.user.test";
 
     /**
-     * System property that specifies an auxilliary test user name used by the 
+     * System property that specifies an auxilliary test user name used by the
      * tests. The default value of this property is <tt>test2</tt>.
      */
     public static final String TEST_USER2_PROP = "oozie.test.user.test2";
@@ -246,7 +247,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return an alternate test user Id that belongs 
+     * Return an alternate test user Id that belongs
        to the test group.
      *
      * @return the user Id.
@@ -256,7 +257,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return an alternate test user Id that does not belong 
+     * Return an alternate test user Id that does not belong
      * to the test group.
      *
      * @return the user Id.
@@ -275,8 +276,8 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return the test working directory. 
-     * <p/> 
+     * Return the test working directory.
+     * <p/>
      * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
      *
      * @param testCase testcase instance to obtain the working directory.
@@ -552,12 +553,20 @@ public abstract class XTestCase extends TestCase {
             entityManager.remove(w);
         }
 
+        q = entityManager.createNamedQuery("GET_SLA_EVENTS");
+        List<SLAEventBean> slaBeans = q.getResultList();
+        int slaSize = slaBeans.size();
+        for (SLAEventBean w : slaBeans) {
+            entityManager.remove(w);
+        }
+
         store.commitTrx();
         store.closeTrx();
         log.info(wfjSize + " entries in WF_JOBS removed from DB!");
         log.info(wfaSize + " entries in WF_ACTIONS removed from DB!");
         log.info(cojSize + " entries in COORD_JOBS removed from DB!");
         log.info(coaSize + " entries in COORD_ACTIONS removed from DB!");
+        log.info(slaSize + " entries in SLA_EVENTS removed from DB!");
     }
 
     private static MiniDFSCluster dfsCluster = null;

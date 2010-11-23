@@ -15,15 +15,14 @@
 package org.apache.oozie.command.jpa;
 
 import java.util.Date;
+import java.util.List;
 
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.workflow.WorkflowInstance;
 
-public class TestWorkflowJobGetCommand extends XDataTestCase {
+public class TestSLAEventsGetForSeqIdCommand extends XDataTestCase {
     Services services;
 
     @Override
@@ -40,19 +39,21 @@ public class TestWorkflowJobGetCommand extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testWfJobGet() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestWorkflowJobGetCommand-W";
-        addRecordToWfJobTable(wfId, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-        _testGetJob(wfId);
+    public void testSLAEventsGetForSeqId() throws Exception {
+        final String wfId = "0000000-" + new Date().getTime() + "-TestSLAEventsGetForSeqIdCommand-W";
+        addRecordToSLAEventTable(wfId);
+        addRecordToSLAEventTable(wfId);
+        addRecordToSLAEventTable(wfId);
+        _testGetSLAEventsForSeqId(wfId);
     }
 
-    private void _testGetJob(String jobId) throws Exception {
+    private void _testGetSLAEventsForSeqId(String jobId) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobGetCommand wfGetCmd = new WorkflowJobGetCommand(jobId);
-        WorkflowJobBean ret = jpaService.execute(wfGetCmd);
-        assertNotNull(ret);
-        assertEquals(ret.getId(), jobId);
+        SLAEventsGetForSeqIdCommand slaEventsGetCmd = new SLAEventsGetForSeqIdCommand(0, 10);
+        List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
+        assertNotNull(list);
+        assertEquals(2, list.size());
     }
 
 }

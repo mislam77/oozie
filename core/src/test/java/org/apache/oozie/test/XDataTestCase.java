@@ -29,18 +29,22 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.SLAEvent;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.jpa.CoordActionInsertCommand;
 import org.apache.oozie.command.jpa.CoordJobInsertCommand;
+import org.apache.oozie.command.jpa.SLAEventInsertCommand;
 import org.apache.oozie.command.jpa.WorkflowActionInsertCommand;
 import org.apache.oozie.command.jpa.WorkflowJobInsertCommand;
 import org.apache.oozie.local.LocalOozie;
@@ -137,7 +141,7 @@ public class XDataTestCase extends XFsTestCase {
      * @param actionNum
      * @param status
      * @param resourceXmlName
-     * @return TODO
+     * @return action id
      * @throws StoreException
      * @throws IOException
      */
@@ -221,35 +225,11 @@ public class XDataTestCase extends XFsTestCase {
      * @param wfId
      * @param actionNum
      * @param status
+     * @return action id
      * @throws Exception
      */
-    protected void addRecordToWfActionTable(String wfId, int actionNum, WorkflowAction.Status status) throws Exception {
-        WorkflowActionBean action = new WorkflowActionBean();
-        String actionId = wfId + "@" + actionNum;
-        action.setId(actionId);
-        action.setJobId(wfId);
-        action.setName("testAction");
-        action.setType("map-reduce");
-        action.setStatus(status);
-        action.setStartTime(new Date());
-        action.setEndTime(new Date());
-        action.setLastCheckTime(new Date());
-        action.resetPendingOnly();
-
-        String actionXml = "<map-reduce>" +
-        "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-        "<name-node>" + getNameNodeUri() + "</name-node>" +
-        "<configuration>" +
-        "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName() +
-        "</value></property>" +
-        "<property><name>mapred.reducer.class</name><value>" + MapperReducerForTest.class.getName() +
-        "</value></property>" +
-        "<property><name>mapred.input.dir</name><value>inputDir</value></property>" +
-        "<property><name>mapred.output.dir</name><value>outputDir</value></property>" +
-        "</configuration>" +
-        "</map-reduce>";
-        action.setConf(actionXml);
-
+    protected String addRecordToWfActionTable(String wfId, int actionNum, WorkflowAction.Status status) throws Exception {
+        WorkflowActionBean action = createWorkflowAction(wfId, actionNum, status);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
@@ -259,6 +239,47 @@ public class XDataTestCase extends XFsTestCase {
         catch (CommandException ce) {
             ce.printStackTrace();
             fail("Unable to insert the test wf action record to table");
+            throw ce;
+        }
+        return action.getId();
+    }
+
+    /**
+     * Insert sla event for testing.
+     *
+     * @throws Exception
+     */
+    protected void addRecordToSLAEventTable(String slaId) throws Exception {
+        SLAEventBean sla = new SLAEventBean();
+        sla.setSlaId(slaId);
+        sla.setAppName("app-name");
+        sla.setParentClientId("parent-child-id");
+        sla.setParentSlaId("parent-sla-id");
+        sla.setExpectedStart(new Date());
+        sla.setExpectedEnd(new Date());
+        sla.setNotificationMsg("notification-msg");
+        sla.setAlertContact("alert-contact");
+        sla.setDevContact("dev-contact");
+        sla.setQaContact("qa-contact");
+        sla.setSeContact("se-contact");
+        sla.setAlertFrequency("alert-frequency");
+        sla.setAlertPercentage("alert-percentage");
+        sla.setUpstreamApps("upstream-apps");
+        sla.setAppType(SLAEvent.SlaAppType.WORKFLOW_JOB);
+        sla.setUser(getTestUser());
+        sla.setGroupName(getTestGroup());
+        sla.setJobStatus(Status.CREATED);
+        sla.setStatusTimestamp(new Date());
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            SLAEventInsertCommand slaInsertCmd = new SLAEventInsertCommand(sla);
+            jpaService.execute(slaInsertCmd);
+        }
+        catch (CommandException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test sla event record to table");
             throw ce;
         }
     }
@@ -379,6 +400,37 @@ public class XDataTestCase extends XFsTestCase {
         workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
+    }
+
+    protected WorkflowActionBean createWorkflowAction(String wfId, int actionNum, WorkflowAction.Status status) throws Exception {
+        WorkflowActionBean action = new WorkflowActionBean();
+        String actionId = wfId + "@" + actionNum;
+        action.setId(actionId);
+        action.setJobId(wfId);
+        action.setName("testAction");
+        action.setType("map-reduce");
+        action.setTransition("transition");
+        action.setStatus(status);
+        action.setStartTime(new Date());
+        action.setEndTime(new Date());
+        action.setLastCheckTime(new Date());
+        action.resetPendingOnly();
+
+        String actionXml = "<map-reduce>" +
+        "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+        "<name-node>" + getNameNodeUri() + "</name-node>" +
+        "<configuration>" +
+        "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName() +
+        "</value></property>" +
+        "<property><name>mapred.reducer.class</name><value>" + MapperReducerForTest.class.getName() +
+        "</value></property>" +
+        "<property><name>mapred.input.dir</name><value>inputDir</value></property>" +
+        "<property><name>mapred.output.dir</name><value>outputDir</value></property>" +
+        "</configuration>" +
+        "</map-reduce>";
+        action.setConf(actionXml);
+
+        return action;
     }
 
 }
