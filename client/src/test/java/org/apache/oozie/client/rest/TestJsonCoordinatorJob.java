@@ -19,15 +19,12 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 
+import junit.framework.TestCase;
+
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
-import org.apache.oozie.client.rest.JsonUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-
-import junit.framework.TestCase;
 
 public class TestJsonCoordinatorJob extends TestCase {
 
@@ -143,7 +140,7 @@ public class TestJsonCoordinatorJob extends TestCase {
         array.writeJSONString(sw);
         sw.close();
         array = (JSONArray) JSONValue.parse(new StringReader(sw.toString()));
-        List<CoordinatorJob> readApplications = JsonCoordinatorJob.fromJSONArray(array);
+        List<JsonCoordinatorJob> readApplications = JsonCoordinatorJob.fromJSONArray(array);
         assertEquals(2, readApplications.size());
     }
 

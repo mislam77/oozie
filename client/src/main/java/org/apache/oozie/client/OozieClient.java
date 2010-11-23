@@ -114,7 +114,7 @@ public class OozieClient {
     public static final String CHANGE_VALUE_PAUSETIME = "pausetime";
 
     public static final String CHANGE_VALUE_CONCURRENCY = "concurrency";
-    
+
     public static final String LIBPATH = "oozie.libpath";
 
     public static final String USE_SYSTEM_LIBPATH = "oozie.use.system.libpath";
@@ -126,7 +126,7 @@ public class OozieClient {
     private String baseUrl;
     private String protocolUrl;
     private boolean validatedVersion = false;
-    private Map<String, String> headers = new HashMap<String, String>();
+    private final Map<String, String> headers = new HashMap<String, String>();
 
 
 
@@ -327,10 +327,10 @@ public class OozieClient {
     }
 
     protected abstract class ClientCallable<T> implements Callable<T> {
-        private String method;
-        private String collection;
-        private String resource;
-        private Map<String, String> params;
+        private final String method;
+        private final String collection;
+        private final String resource;
+        private final Map<String, String> params;
 
         public ClientCallable(String method, String collection, String resource, Map<String, String> params) {
             this.method = method;
@@ -426,7 +426,7 @@ public class OozieClient {
     }
 
     private class JobSubmit extends ClientCallable<String> {
-        private Properties conf;
+        private final Properties conf;
 
         JobSubmit(Properties conf, boolean start) {
             super("POST", RestConstants.JOBS, "", (start) ? prepareParams(RestConstants.ACTION_PARAM,
@@ -844,7 +844,7 @@ public class OozieClient {
         }
     }
 
-    private class CoordJobsStatus extends ClientCallable<List<CoordinatorJob>> {
+    private class CoordJobsStatus extends ClientCallable<List<JsonCoordinatorJob>> {
 
         CoordJobsStatus(String filter, int start, int len) {
             super("GET", RestConstants.JOBS, "", prepareParams(RestConstants.JOBS_FILTER_PARAM, filter,
@@ -854,7 +854,7 @@ public class OozieClient {
 
         @Override
         @SuppressWarnings("unchecked")
-        protected List<CoordinatorJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
+        protected List<JsonCoordinatorJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
@@ -1120,7 +1120,7 @@ public class OozieClient {
      * @return a list with the coordinator jobs info
      * @throws OozieClientException thrown if the jobs info could not be retrieved.
      */
-    public List<CoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
+    public List<JsonCoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
         return new CoordJobsStatus(filter, start, len).call();
     }
 

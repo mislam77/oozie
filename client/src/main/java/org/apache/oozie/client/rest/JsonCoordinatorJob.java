@@ -14,17 +14,25 @@
  */
 package org.apache.oozie.client.rest;
 
-import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.CoordinatorAction;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
 
-import javax.persistence.*;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 @Entity
 @Table(name = "COORD_JOBS")
@@ -347,6 +355,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         this.consoleUrl = consoleUrl;
     }
 
+    @Override
     public String toString() {
         return MessageFormat.format("Coornidator application id[{0}] status[{1}]", getId(), getStatus());
     }
@@ -384,8 +393,8 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
      * @return the corresponding application list.
      */
     @SuppressWarnings("unchecked")
-    public static List<CoordinatorJob> fromJSONArray(JSONArray applications) {
-        List<CoordinatorJob> list = new ArrayList<CoordinatorJob>();
+    public static List<JsonCoordinatorJob> fromJSONArray(JSONArray applications) {
+        List<JsonCoordinatorJob> list = new ArrayList<JsonCoordinatorJob>();
         for (Object obj : applications) {
             list.add(new JsonCoordinatorJob((JSONObject) obj));
         }
