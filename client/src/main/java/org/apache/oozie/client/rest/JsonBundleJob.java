@@ -182,10 +182,10 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     /* (non-Javadoc)
      * @see org.apache.oozie.client.BundleJob#getCoordinators()
      */
-    @SuppressWarnings("unchecked")
     @Override
+    @SuppressWarnings("unchecked")
     public List<CoordinatorJob> getCoordinators() {
-        return (List<CoordinatorJob>)coordJobs;
+        return (List) coordJobs;
     }
 
     /* (non-Javadoc)
@@ -380,7 +380,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
 
     /**
      * Convert a Bundle job list into a JSONArray.
-     * 
+     *
      * @param application list.
      * @return the corresponding JSON array.
      */
@@ -397,7 +397,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
 
     /**
      * Convert a JSONArray into an application list.
-     * 
+     *
      * @param array JSON array.
      * @return the corresponding application list.
      */
