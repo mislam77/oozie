@@ -38,7 +38,7 @@ public class WorkflowJobGetCommand implements JPACommand<WorkflowJobBean> {
 
     @Override
     public String getName() {
-        return "CoordinatorJobGetCommand";
+        return "WorkflowJobGetCommand";
     }
 
     @Override
