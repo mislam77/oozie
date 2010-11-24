@@ -33,6 +33,7 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.command.jpa.WorkflowActionGetCommand;
 import org.apache.oozie.command.jpa.WorkflowActionUpdateCommand;
 import org.apache.oozie.command.jpa.WorkflowJobGetCommand;
@@ -243,7 +244,7 @@ public class ActionStartXCommand extends WorkflowActionXCommand<Void> {
                 case FAILED:
                     try {
                         failJob(context);
-                        //TODO queue(new CoordActionUpdateXCommand(wfJob));
+                        queue(new CoordActionUpdateXCommand(wfJob));
                         SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                                 SlaAppType.WORKFLOW_ACTION);
                         SLADbXOperations.writeStausEvent(wfJob.getSlaXml(), wfJob.getId(), Status.FAILED,
@@ -270,7 +271,7 @@ public class ActionStartXCommand extends WorkflowActionXCommand<Void> {
         jpaService.execute(new WorkflowJobUpdateCommand(workflow));
         SLADbXOperations.writeStausEvent(action.getSlaXml(), action.getId(), Status.FAILED, SlaAppType.WORKFLOW_ACTION);
         SLADbXOperations.writeStausEvent(workflow.getSlaXml(), workflow.getId(), Status.FAILED, SlaAppType.WORKFLOW_JOB);
-        //TODO queue(new CoordActionUpdateXCommand(workflow));
+        queue(new CoordActionUpdateXCommand(workflow));
         return;
     }
 

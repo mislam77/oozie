@@ -75,9 +75,12 @@ import org.jdom.Namespace;
 import org.xml.sax.SAXException;
 
 /**
- * This class provides the functionalities to resolve a coordinator job XML and write the job information into a DB
- * table. <p/> Specifically it performs the following functions: 1. Resolve all the variables or properties using job
- * configurations. 2. Insert all datasets definition as part of the <data-in> and <data-out> tags. 3. Validate the XML
+ * This class provides the functionalities to resolve a coordinator job XML and
+ * write the job information into a DB table.
+ * <p/>
+ * Specifically it performs the following functions: 1. Resolve all the
+ * variables or properties using job configurations. 2. Insert all datasets
+ * definition as part of the <data-in> and <data-out> tags. 3. Validate the XML
  * at runtime.
  */
 public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
@@ -93,7 +96,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     /**
-     * Default timeout for normal jobs, in minutes, after which coordinator input check will timeout
+     * Default timeout for normal jobs, in minutes, after which coordinator
+     * input check will timeout
      */
     public static final String CONF_DEFAULT_TIMEOUT_NORMAL = Service.CONF_PREFIX + "coord.normal.default.timeout";
 
@@ -105,15 +109,15 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     private ELEvaluator evalSla = null;
 
     static {
-        String[] badUserProps = {PropertiesUtils.YEAR, PropertiesUtils.MONTH, PropertiesUtils.DAY,
+        String[] badUserProps = { PropertiesUtils.YEAR, PropertiesUtils.MONTH, PropertiesUtils.DAY,
                 PropertiesUtils.HOUR, PropertiesUtils.MINUTE, PropertiesUtils.DAYS, PropertiesUtils.HOURS,
                 PropertiesUtils.MINUTES, PropertiesUtils.KB, PropertiesUtils.MB, PropertiesUtils.GB,
                 PropertiesUtils.TB, PropertiesUtils.PB, PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN,
-                PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN, PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
+                PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN, PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
 
-        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER, PropertiesUtils.HADOOP_UGI,
-                WorkflowAppService.HADOOP_JT_KERBEROS_NAME, WorkflowAppService.HADOOP_NN_KERBEROS_NAME};
+        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER, PropertiesUtils.HADOOP_UGI,
+                WorkflowAppService.HADOOP_JT_KERBEROS_NAME, WorkflowAppService.HADOOP_NN_KERBEROS_NAME };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
         PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
@@ -131,7 +135,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     }
 
     public CoordSubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
-        //super("coord_submit", "coord_submit", 1, XLog.STD, dryrun);
         super("coord_submit", "coord_submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
@@ -161,7 +164,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             setLogInfo(coordJob);
 
             if (!dryrun) {
-                // submit a command to materialize jobs for the next 1 hour (3600 secs)
+                // submit a command to materialize jobs for the next 1 hour
+                // (3600 secs)
                 // so we don't wait 10 mins for the Service to run.
                 queue(new CoordJobMatLookupXCommand(jobId, 3600), 100);
             }
@@ -178,7 +182,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 log.info("[" + jobId + "]: Update status to PREMATER");
                 coordJob.setStatus(CoordinatorJob.Status.PREMATER);
                 CoordActionMaterializeCommand coordActionMatCom = new CoordActionMaterializeCommand(jobId, startTime,
-                                                                                                    endTime);
+                        endTime);
                 Configuration jobConf = null;
                 try {
                     jobConf = new XConfiguration(new StringReader(coordJob.getConf()));
@@ -200,7 +204,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             log.warn("ERROR:  ", iex);
             throw new CommandException(ErrorCode.E1003, iex);
         }
-        catch (Exception ex) {// TODO
+        catch (Exception ex) {
             log.warn("ERROR:  ", ex);
             throw new CommandException(ErrorCode.E0803, ex);
         }
@@ -216,7 +220,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     private String readAndValidateXml() throws CoordinatorJobException {
         String appPath = ParamChecker.notEmpty(conf.get(OozieClient.COORDINATOR_APP_PATH),
-                                               OozieClient.COORDINATOR_APP_PATH);// TODO: COORDINATOR_APP_PATH
+                OozieClient.COORDINATOR_APP_PATH);
         String coordXml = readDefinition(appPath);
         validateXml(coordXml);
         return coordXml;
@@ -231,7 +235,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     private void validateXml(String xmlContent) throws CoordinatorJobException {
         javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaName.COORDINATOR);
         Validator validator = schema.newValidator();
-        // log.warn("XML " + xmlContent);
         try {
             validator.validate(new StreamSource(new StringReader(xmlContent)));
         }
@@ -240,7 +243,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             throw new CoordinatorJobException(ErrorCode.E0701, ex.getMessage(), ex);
         }
         catch (IOException ex) {
-            // ex.printStackTrace();
             log.warn("IOException :", ex);
             throw new CoordinatorJobException(ErrorCode.E0702, ex.getMessage(), ex);
         }
@@ -253,16 +255,13 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     protected void mergeDefaultConfig() throws CommandException {
         Path configDefault = new Path(conf.get(OozieClient.COORDINATOR_APP_PATH), CONFIG_DEFAULT);
-        // Configuration fsConfig = new Configuration();
-        // log.warn("CONFIG :" + configDefault.toUri());
         Configuration fsConfig = CoordUtils.getHadoopConf(conf);
         FileSystem fs;
-        // TODO: which conf?
         try {
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
             fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, configDefault.toUri(),
-                                                                                  new Configuration());
+                    new Configuration());
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
                 PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
@@ -284,8 +283,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     }
 
     /**
-     * The method resolve all the variables that are defined in configuration. It also include the data set definition
-     * from dataset file into XML.
+     * The method resolve all the variables that are defined in configuration.
+     * It also include the data set definition from dataset file into XML.
      *
      * @param appXml : Original job XML
      * @param conf : Configuration of the job
@@ -307,6 +306,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @param eDatasets : DataSet XML
      * @return updated application
      */
+    @SuppressWarnings("unchecked")
     private void insertDataSet(Element eAppXml, Element eDatasets) {
         // Adding DS definition in the coordinator XML
         Element inputList = eAppXml.getChild("input-events", eAppXml.getNamespace());
@@ -332,6 +332,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @param name : queried data set name
      * @return one Dataset element. otherwise throw Exception
      */
+    @SuppressWarnings("unchecked")
     private static Element findDataSet(Element eDatasets, String name) {
         for (Element eDataset : (List<Element>) eDatasets.getChildren("dataset", eDatasets.getNamespace())) {
             if (eDataset.getAttributeValue("name").equals(name)) {
@@ -362,6 +363,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @return Resolved job XML element.
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     protected Element resolveInitial(Configuration conf, String appXml, CoordinatorJobBean coordJob)
             throws CoordinatorJobException, Exception {
         Element eAppXml = XmlUtils.parseXml(appXml);
@@ -373,7 +375,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         coordJob.setFrequency(ival);
         TimeUnit tmp = (evalFreq.getVariable("timeunit") == null) ? TimeUnit.MINUTE : ((TimeUnit) evalFreq
                 .getVariable("timeunit"));
-        addAnAttribute("freq_timeunit", eAppXml, tmp.toString()); // TODO: Store
+        addAnAttribute("freq_timeunit", eAppXml, tmp.toString());
         // TimeUnit
         coordJob.setTimeUnit(CoordinatorJob.Timeunit.valueOf(tmp.toString()));
         // End Of Duration
@@ -402,21 +404,19 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         }
 
         ival = ParamChecker.checkInteger(val, "timeout");
-        // ParamChecker.checkGEZero(ival, "timeout");
         coordJob.setTimeout(ival);
         val = resolveTagContents("concurrency", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == "") {
             val = "-1";
         }
         ival = ParamChecker.checkInteger(val, "concurrency");
-        // ParamChecker.checkGEZero(ival, "concurrency");
         coordJob.setConcurrency(ival);
         val = resolveTagContents("execution", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == "") {
             val = Execution.FIFO.toString();
         }
         coordJob.setExecution(Execution.valueOf(val));
-        String[] acceptedVals = {Execution.LIFO.toString(), Execution.FIFO.toString(), Execution.LAST_ONLY.toString()};
+        String[] acceptedVals = { Execution.LIFO.toString(), Execution.FIFO.toString(), Execution.LAST_ONLY.toString() };
         ParamChecker.isMember(val, acceptedVals, "execution");
 
         // datasets
@@ -427,23 +427,18 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         resolveIOEvents(eAppXml, dataNameList);
 
         resolveTagContents("app-path", eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
-                                                                                                   eAppXml.getNamespace()), evalNofuncs);
-        // TODO: If action or workflow tag is missing, NullPointerException will
-        // occur
+                eAppXml.getNamespace()), evalNofuncs);
+        // TODO: If action or workflow tag is missing, NullPointerException will occur
         Element configElem = eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
-                                                                                         eAppXml.getNamespace()).getChild("configuration", eAppXml.getNamespace());
+                eAppXml.getNamespace()).getChild("configuration", eAppXml.getNamespace());
         evalData = CoordELEvaluator.createELEvaluatorForDataEcho(conf, "coord-job-submit-data", dataNameList);
         if (configElem != null) {
             for (Element propElem : (List<Element>) configElem.getChildren("property", configElem.getNamespace())) {
                 resolveTagContents("name", propElem, evalData);
-                // log.warn("Value :");
-                // Want to check the data-integrity but don't want to modify the
-                // XML
+                // Want to check the data-integrity but don't want to modify the XML
                 // for properties only
                 Element tmpProp = (Element) propElem.clone();
                 resolveTagContents("value", tmpProp, evalData);
-                // val = resolveTagContents("value", propElem, evalData);
-                // log.warn("Value OK :" + val);
             }
         }
         resolveSLA(eAppXml, coordJob);
@@ -454,7 +449,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         // String prefix = XmlUtils.getNamespacePrefix(eAppXml,
         // SchemaService.SLA_NAME_SPACE_URI);
         Element eSla = eAppXml.getChild("action", eAppXml.getNamespace()).getChild("info",
-                                                                                   Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
+                Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
 
         if (eSla != null) {
             String slaXml = XmlUtils.prettyPrint(eSla).toString();
@@ -476,6 +471,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @param eJob : Job element
      * @throws CoordinatorJobException
      */
+    @SuppressWarnings("unchecked")
     private void resolveIOEvents(Element eJobOrg, HashMap<String, String> dataNameList) throws CoordinatorJobException {
         // Resolving input-events/data-in
         // Clone the job and don't update anything in the original
@@ -535,6 +531,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @param eAppXml : Job Element XML
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     private void resolveDataSets(Element eAppXml) throws Exception {
         Element datasetList = eAppXml.getChild("datasets", eAppXml.getNamespace());
         if (datasetList != null) {
@@ -542,7 +539,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             List<Element> dsElems = datasetList.getChildren("dataset", eAppXml.getNamespace());
             resolveDataSets(dsElems);
             resolveTagContents("app-path", eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
-                                                                                                       eAppXml.getNamespace()), evalNofuncs);
+                    eAppXml.getNamespace()), evalNofuncs);
         }
     }
 
@@ -553,10 +550,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @throws CoordinatorJobException
      * @throws Exception
      */
-    private void resolveDataSets(List<Element> dsElems) throws CoordinatorJobException /*
-                                                                                        * throws
-                                                                                        * Exception
-                                                                                        */ {
+    private void resolveDataSets(List<Element> dsElems) throws CoordinatorJobException {
         for (Element dsElem : dsElems) {
             // Setting up default TimeUnit and EndOFDuraion
             evalFreq.setVariable("timeunit", TimeUnit.MINUTE);
@@ -587,6 +581,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @return Resolved tag content.
      * @throws CoordinatorJobException
      */
+    @SuppressWarnings("unchecked")
     private String resolveTagContents(String tagName, Element elem, ELEvaluator eval) throws CoordinatorJobException {
         String ret = "";
         if (elem != null) {
@@ -598,16 +593,12 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
 
                     }
                     catch (Exception e) {
-                        // e.printStackTrace();
                         throw new CoordinatorJobException(ErrorCode.E1004, e.getMessage(), e);
                     }
                     tagElem.removeContent();
                     tagElem.addContent(updated);
                     ret += updated;
                 }
-                /*
-                 * else { //TODO: unlike event }
-                 */
             }
         }
         return ret;
@@ -631,7 +622,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
 
             }
             catch (Exception e) {
-                // e.printStackTrace();
                 throw new CoordinatorJobException(ErrorCode.E1004, e.getMessage(), e);
             }
             attr.setValue(val);
@@ -646,15 +636,14 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @param conf : Job configuration
      * @throws CoordinatorJobException
      */
-    protected void includeDataSets(Element resolvedXml, Configuration conf) throws CoordinatorJobException
-        /* throws Exception */ {
+    @SuppressWarnings("unchecked")
+    protected void includeDataSets(Element resolvedXml, Configuration conf) throws CoordinatorJobException {
         Element datasets = resolvedXml.getChild("datasets", resolvedXml.getNamespace());
         Element allDataSets = new Element("all_datasets", resolvedXml.getNamespace());
         List<String> dsList = new ArrayList<String>();
         if (datasets != null) {
             for (Element includeElem : (List<Element>) datasets.getChildren("include", datasets.getNamespace())) {
                 String incDSFile = includeElem.getTextTrim();
-                // log.warn(" incDSFile " + incDSFile);
                 includeOneDSFile(incDSFile, dsList, allDataSets, datasets.getNamespace());
             }
             for (Element e : (List<Element>) datasets.getChildren("dataset", datasets.getNamespace())) {
@@ -662,8 +651,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 if (dsList.contains(dsName)) {// Override with this DS
                     // Remove old DS
                     removeDataSet(allDataSets, dsName);
-                    // throw new RuntimeException("Duplicate Dataset " +
-                    // dsName);
+                    // throw new RuntimeException("Duplicate Dataset " + dsName);
                 }
                 else {
                     dsList.add(dsName);
@@ -685,6 +673,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @throws CoordinatorJobException
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     private void includeOneDSFile(String incDSFile, List<String> dsList, Element allDataSets, Namespace dsNameSpace)
             throws CoordinatorJobException {
         Element tmpDataSets = null;
@@ -693,12 +682,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             log.debug("DSFILE :" + incDSFile + "\n" + dsXml);
             tmpDataSets = XmlUtils.parseXml(dsXml);
         }
-        /*
-         * catch (IOException iex) {XLog.getLog(getClass()).warn(
-         * "Error reading included dataset file [{0}].  Message [{1}]",
-         * incDSFile, iex.getMessage()); throw new
-         * CommandException(ErrorCode.E0803, iex.getMessage()); }
-         */
         catch (JDOMException e) {
             log.warn("Error parsing included dataset [{0}].  Message [{1}]", incDSFile, e.getMessage());
             throw new CoordinatorJobException(ErrorCode.E0700, e.getMessage());
@@ -711,9 +694,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             }
             dsList.add(dsName);
             Element tmp = (Element) e.clone();
-            // TODO: Don't like to over-write the external/include DS's
-            // namespace
-            tmp.setNamespace(dsNameSpace);// TODO:
+            // TODO: Don't like to over-write the external/include DS's namespace
+            tmp.setNamespace(dsNameSpace);
             tmp.getChild("uri-template").setNamespace(dsNameSpace);
             if (e.getChild("done-flag") != null) {
                 tmp.getChild("done-flag").setNamespace(dsNameSpace);
@@ -723,7 +705,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         // nested include
         for (Element includeElem : (List<Element>) tmpDataSets.getChildren("include", tmpDataSets.getNamespace())) {
             String incFile = includeElem.getTextTrim();
-            // log.warn("incDSFile "+ incDSFile);
             includeOneDSFile(incFile, dsList, allDataSets, dsNameSpace);
         }
     }
@@ -734,6 +715,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @param eDatasets : List of dataset
      * @param name : Dataset name to be removed.
      */
+    @SuppressWarnings("unchecked")
     private static void removeDataSet(Element eDatasets, String name) {
         for (Element eDataset : (List<Element>) eDatasets.getChildren("dataset", eDatasets.getNamespace())) {
             if (eDataset.getAttributeValue("name").equals(name)) {
@@ -761,30 +743,28 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             URI uri = new URI(appPath);
             log.debug("user =" + user + " group =" + group);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri,
-                                                                                             new Configuration());
+                    new Configuration());
             Path p = new Path(uri.getPath());
 
-            // Reader reader = new InputStreamReader(fs.open(new Path(uri
-            // .getPath(), fileName)));
-            Reader reader = new InputStreamReader(fs.open(p));// TODO
+            Reader reader = new InputStreamReader(fs.open(p));
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
         }
         catch (IOException ex) {
             log.warn("IOException :" + XmlUtils.prettyPrint(confHadoop), ex);
-            throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex); // TODO:
+            throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
             log.warn("URISyException :" + ex.getMessage());
-            throw new CoordinatorJobException(ErrorCode.E1002, appPath, ex.getMessage(), ex);// TODO:
+            throw new CoordinatorJobException(ErrorCode.E1002, appPath, ex.getMessage(), ex);
         }
         catch (HadoopAccessorException ex) {
             throw new CoordinatorJobException(ex);
         }
         catch (Exception ex) {
             log.warn("Exception :", ex);
-            throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex);// TODO:
+            throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex);
         }
     }
 
@@ -803,7 +783,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         coordJob.setAppName(eJob.getAttributeValue("name"));
         coordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
         coordJob.setStatus(CoordinatorJob.Status.PREP);
-        coordJob.setCreatedTime(new Date()); // TODO: Do we need that?
+        coordJob.setCreatedTime(new Date());
         coordJob.setUser(conf.get(OozieClient.USER_NAME));
         coordJob.setGroup(conf.get(OozieClient.GROUP_NAME));
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
@@ -816,56 +796,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             jpaService.execute(new CoordJobInsertCommand(coordJob));
         }
         return jobId;
-    }
-
-    /**
-     * For unit-testing only. Will ultimately go away
-     *
-     * @param args
-     * @throws Exception
-     * @throws JDOMException
-     */
-    public static void main(String[] args) throws Exception {
-        // TODO Auto-generated method stub
-        // Configuration conf = new XConfiguration(IOUtils.getResourceAsReader(
-        // "org/apache/oozie/coord/conf.xml", -1));
-
-        Configuration conf = new XConfiguration();
-
-        // base case
-        // conf.set(OozieClient.COORDINATOR_APP_PATH,
-        // "file:///Users/danielwo/oozie/workflows/coord/test1/");
-
-        // no input datasets
-        // conf.set(OozieClient.COORDINATOR_APP_PATH,
-        // "file:///Users/danielwo/oozie/workflows/coord/coord_noinput/");
-        // conf.set(OozieClient.COORDINATOR_APP_PATH,
-        // "file:///Users/danielwo/oozie/workflows/coord/coord_use_apppath/");
-
-        // only 1 instance
-        // conf.set(OozieClient.COORDINATOR_APP_PATH,
-        // "file:///Users/danielwo/oozie/workflows/coord/coord_oneinstance/");
-
-        // no local props in xml
-        // conf.set(OozieClient.COORDINATOR_APP_PATH,
-        // "file:///Users/danielwo/oozie/workflows/coord/coord_noprops/");
-
-        conf.set(OozieClient.COORDINATOR_APP_PATH,
-                 "file:///homes/test/workspace/sandbox_krishna/oozie-main/core/src/main/java/org/apache/oozie/coord/");
-        conf.set(OozieClient.USER_NAME, "test");
-        // conf.set(OozieClient.USER_NAME, "danielwo");
-        conf.set(OozieClient.GROUP_NAME, "other");
-        // System.out.println("appXml :"+ appXml + "\n conf :"+ conf);
-        new Services().init();
-        try {
-            CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "TESTING");
-            String jobId = sc.call();
-            System.out.println("Job Id " + jobId);
-            Thread.sleep(80000);
-        }
-        finally {
-            Services.get().destroy();
-        }
     }
 
     @Override
