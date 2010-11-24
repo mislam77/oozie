@@ -17,15 +17,16 @@ package org.apache.oozie.command.wf;
 import java.util.Date;
 
 import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.jpa.WorkflowActionGetCommand;
 import org.apache.oozie.command.jpa.WorkflowActionInsertCommand;
-import org.apache.oozie.command.jpa.WorkflowJobGetCommand;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
 
@@ -52,23 +53,19 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfActionKillSuccess() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-testWfKill-W";
-        final int actionNum = 1;
-        final String actionId = wfId + "@" + actionNum;
 
-        this.addRecordToWfJobTable(wfId, WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
-        this.addRecordToWfActionTable(wfId, actionNum, WorkflowAction.Status.KILLED);
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.KILLED);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(wfId);
-        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(actionId);
+        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
 
-        WorkflowActionBean action = jpaService.execute(wfActionGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
         assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
         assertEquals(action.getExternalStatus(), "RUNNING");
 
-        new WorkflowActionKillXCommand(actionId).call();
+        new WorkflowActionKillXCommand(action.getId()).call();
 
         action = jpaService.execute(wfActionGetCmd);
         assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
@@ -82,22 +79,19 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfActionKillFailed() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-testWfKill-W";
-        final int actionNum = 1;
-        final String actionId = wfId + "@" + actionNum;
 
-        this.addRecordToWfJobTable(wfId, WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfActionTable(wfId, actionNum, WorkflowAction.Status.RUNNING);
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.RUNNING);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(actionId);
+        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
 
-        WorkflowActionBean action = jpaService.execute(wfActionGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
         assertEquals(action.getStatus(), WorkflowAction.Status.RUNNING);
         assertEquals(action.getExternalStatus(), "RUNNING");
 
-        new WorkflowActionKillXCommand(actionId).call();
+        new WorkflowActionKillXCommand(action.getId()).call();
 
         // action is not in KILLED, action status must not change
         action = jpaService.execute(wfActionGetCmd);
@@ -106,12 +100,12 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
     }
 
     @Override
-    protected String addRecordToWfActionTable(String wfId, int actionNum, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
-        String actionId = wfId + "@" + actionNum;
-        action.setId(actionId);
+        String actionName = "testAction";
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
         action.setJobId(wfId);
-        action.setName("testAction");
+        action.setName(actionName);
         action.setType("map-reduce");
         action.setStatus(status);
         action.setStartTime(new Date());
@@ -146,7 +140,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
             fail("Unable to insert the test wf action record to table");
             throw ce;
         }
-        return actionId;
+        return action;
     }
 
 }

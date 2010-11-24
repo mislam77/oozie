@@ -49,7 +49,7 @@ public class TestWorkflowIdGetForExternalIdCommand extends XDataTestCase {
 
     public void testWfJobIdForExternalId() throws Exception {
         final String wfId = "0000000-" + new Date().getTime() + "-TestWorkflowIdGetForExternalIdCommand-W";
-        addRecordToWfJobTable(wfId, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         _testGetJobIdForExternalId(wfId);
     }
 
@@ -63,8 +63,7 @@ public class TestWorkflowIdGetForExternalIdCommand extends XDataTestCase {
     }
 
     @Override
-    protected void addRecordToWfJobTable(String wfId, WorkflowJob.Status jobStatus,
-            WorkflowInstance.Status instanceStatus) throws Exception {
+    protected WorkflowJobBean addRecordToWfJobTable(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
                 .addNode(new EndNodeDef("end"));
         Configuration conf = new Configuration();
@@ -74,7 +73,6 @@ public class TestWorkflowIdGetForExternalIdCommand extends XDataTestCase {
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
-        wfBean.setId(wfId);
         wfBean.setExternalId("external-id");
 
         try {
@@ -88,6 +86,7 @@ public class TestWorkflowIdGetForExternalIdCommand extends XDataTestCase {
             fail("Unable to insert the test wf job record to table");
             throw ce;
         }
+        return wfBean;
     }
 
 }

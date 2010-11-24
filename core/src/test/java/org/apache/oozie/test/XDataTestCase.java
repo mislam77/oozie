@@ -50,9 +50,10 @@ import org.apache.oozie.command.jpa.WorkflowJobInsertCommand;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.store.StoreException;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLog;
@@ -72,14 +73,42 @@ public class XDataTestCase extends XFsTestCase {
     /**
      * Insert coord job for testing.
      *
-     * @param jobId
      * @param status
-     * @throws StoreException
      * @throws IOException
      * @throws CommandException
+     * @return coord job bean
      */
-    protected void addRecordToCoordJobTable(String jobId, CoordinatorJob.Status status) throws CommandException,
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status) throws CommandException,
             IOException {
+        CoordinatorJobBean coordJob = createCoordJob(status);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertCommand coordInsertCmd = new CoordJobInsertCommand(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (CommandException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw ce;
+        }
+
+        return coordJob;
+
+    }
+
+    /**
+     * Create coord job bean
+     *
+     * @param status
+     * @param appPath
+     * @param appXml
+     * @return coord job bean
+     * @throws IOException
+     */
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status)
+            throws IOException {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = getCoordJobXml(appPath);
 
@@ -92,7 +121,7 @@ public class XDataTestCase extends XFsTestCase {
         IOUtils.copyCharStream(reader2, writer);
 
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
-        coordJob.setId(jobId);
+        coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
         coordJob.setAppName("COORD-TEST");
         coordJob.setAppPath(appPath.toString());
         coordJob.setStatus(status);
@@ -119,19 +148,7 @@ public class XDataTestCase extends XFsTestCase {
             e.printStackTrace();
             fail("Could not set Date/time");
         }
-
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
-            CoordJobInsertCommand coordInsertCmd = new CoordJobInsertCommand(coordJob);
-            jpaService.execute(coordInsertCmd);
-        }
-        catch (CommandException ce) {
-            ce.printStackTrace();
-            fail("Unable to insert the test coord job record to table");
-            throw ce;
-        }
-
+        return coordJob;
     }
 
     /**
@@ -141,13 +158,40 @@ public class XDataTestCase extends XFsTestCase {
      * @param actionNum
      * @param status
      * @param resourceXmlName
-     * @return action id
-     * @throws StoreException
+     * @return coord action bean
+     * @throws IOException
+     * @throws CommandException
+     */
+    protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum, CoordinatorAction.Status status, String resourceXmlName) throws CommandException, IOException {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordActionInsertCommand coordActionInsertCmd = new CoordActionInsertCommand(action);
+            jpaService.execute(coordActionInsertCmd);
+        }
+        catch (CommandException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test coord action record to table");
+            throw ce;
+        }
+        return action;
+    }
+
+    /**
+     * Create coord action bean
+     *
+     * @param jobId
+     * @param actionNum
+     * @param status
+     * @param resourceXmlName
+     * @return coord action bean
      * @throws IOException
      */
-    protected String addRecordToCoordActionTable(String jobId, int actionNum, CoordinatorAction.Status status,
-            String resourceXmlName) throws CommandException, IOException {
-        String actionId = jobId + "@" + actionNum;
+    protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
+            String resourceXmlName) throws IOException {
+        String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, actionNum + "");
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, resourceXmlName);
         String actionNomialTime = getActionNomialTime(actionXml);
@@ -172,29 +216,18 @@ public class XDataTestCase extends XFsTestCase {
         String createdConf = XmlUtils.writePropToString(conf);
 
         action.setCreatedConf(createdConf);
-
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
-            CoordActionInsertCommand coordActionInsertCmd = new CoordActionInsertCommand(action);
-            jpaService.execute(coordActionInsertCmd);
-        }
-        catch (CommandException ce) {
-            ce.printStackTrace();
-            fail("Unable to insert the test coord action record to table");
-            throw ce;
-        }
-        return actionId;
+        return action;
     }
 
     /**
      * Insert wf job for testing.
      *
-     * @param wfId
+     * @param jobStatus
+     * @param instanceStatus
+     * @return job bean
      * @throws Exception
      */
-    protected void addRecordToWfJobTable(String wfId, WorkflowJob.Status jobStatus,
-            WorkflowInstance.Status instanceStatus) throws Exception {
+    protected WorkflowJobBean addRecordToWfJobTable(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
                 .addNode(new EndNodeDef("end"));
         Configuration conf = new Configuration();
@@ -204,7 +237,6 @@ public class XDataTestCase extends XFsTestCase {
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
-        wfBean.setId(wfId);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -217,19 +249,19 @@ public class XDataTestCase extends XFsTestCase {
             fail("Unable to insert the test wf job record to table");
             throw ce;
         }
+        return wfBean;
     }
 
     /**
      * Insert wf action for testing.
      *
      * @param wfId
-     * @param actionNum
      * @param status
-     * @return action id
+     * @return action bean
      * @throws Exception
      */
-    protected String addRecordToWfActionTable(String wfId, int actionNum, WorkflowAction.Status status) throws Exception {
-        WorkflowActionBean action = createWorkflowAction(wfId, actionNum, status);
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, WorkflowAction.Status status) throws Exception {
+        WorkflowActionBean action = createWorkflowAction(wfId, status);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
@@ -241,7 +273,7 @@ public class XDataTestCase extends XFsTestCase {
             fail("Unable to insert the test wf action record to table");
             throw ce;
         }
-        return action.getId();
+        return action;
     }
 
     /**
@@ -378,6 +410,17 @@ public class XDataTestCase extends XFsTestCase {
         return actionNomialTime;
     }
 
+    /**
+     * Create workflow job bean
+     *
+     * @param app
+     * @param conf
+     * @param authToken
+     * @param jobStatus
+     * @param instanceStatus
+     * @return workflow job bean
+     * @throws Exception
+     */
     protected WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken,
             WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
@@ -386,7 +429,7 @@ public class XDataTestCase extends XFsTestCase {
         WorkflowInstance wfInstance = workflowLib.createInstance(app, conf);
         ((LiteWorkflowInstance) wfInstance).setStatus(instanceStatus);
         WorkflowJobBean workflow = new WorkflowJobBean();
-        workflow.setId(wfInstance.getId());
+        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
         workflow.setAppName(app.getName());
         workflow.setAppPath(conf.get(OozieClient.APP_PATH));
         workflow.setConf(XmlUtils.prettyPrint(conf).toString());
@@ -402,12 +445,19 @@ public class XDataTestCase extends XFsTestCase {
         return workflow;
     }
 
-    protected WorkflowActionBean createWorkflowAction(String wfId, int actionNum, WorkflowAction.Status status) throws Exception {
+    /**
+     * Create workflow action bean
+     *
+     * @param wfId
+     * @param status
+     * @return workflow action bean
+     * @throws Exception
+     */
+    protected WorkflowActionBean createWorkflowAction(String wfId, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
-        String actionId = wfId + "@" + actionNum;
-        action.setId(actionId);
-        action.setJobId(wfId);
         action.setName("testAction");
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, "testAction"));
+        action.setJobId(wfId);
         action.setType("map-reduce");
         action.setTransition("transition");
         action.setStatus(status);

@@ -14,13 +14,14 @@
  */
 package org.apache.oozie.command.jpa;
 
-import java.util.Date;
-
 import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestWorkflowActionGetCommand extends XDataTestCase {
     Services services;
@@ -39,12 +40,10 @@ public class TestWorkflowActionGetCommand extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testWfJobGet() throws Exception {
-        String jobId = "00000-" + new Date().getTime() + "-TestWorkflowActionGetCommand-W";
-        int actionNum = 1;
-        String actionId = jobId + "@" + actionNum;
-        addRecordToWfActionTable(jobId, actionNum, WorkflowAction.Status.PREP);
-        _testGetAction(actionId);
+    public void testWfActionGet() throws Exception {
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        _testGetAction(action.getId());
     }
 
     private void _testGetAction(String actionId) throws Exception {

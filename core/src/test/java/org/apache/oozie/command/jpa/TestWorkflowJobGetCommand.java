@@ -14,8 +14,6 @@
  */
 package org.apache.oozie.command.jpa;
 
-import java.util.Date;
-
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.JPAService;
@@ -41,9 +39,8 @@ public class TestWorkflowJobGetCommand extends XDataTestCase {
     }
 
     public void testWfJobGet() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestWorkflowJobGetCommand-W";
-        addRecordToWfJobTable(wfId, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-        _testGetJob(wfId);
+        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        _testGetJob(job.getId());
     }
 
     private void _testGetJob(String jobId) throws Exception {

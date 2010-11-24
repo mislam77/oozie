@@ -15,7 +15,6 @@
 package org.apache.oozie.command.jpa;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,14 +47,11 @@ public class TestCoordJobInfoGetCommand extends XDataTestCase {
     }
 
     public void testCoordJobGet() throws Exception {
-        String jobId1 = "00001-" + new Date().getTime() + "-TestCoordJobInfoGetCommand-C";
-        addRecordToCoordJobTable(jobId1, CoordinatorJob.Status.RUNNING);
-        String jobId2 = "00002-" + new Date().getTime() + "-TestCoordJobInfoGetCommand-C";
-        addRecordToCoordJobTable(jobId2, CoordinatorJob.Status.KILLED);
+        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING);
+        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED);
         _testGetJobInfoForStatus();
         _testGetJobInfoForGroup();
-        String jobId3 = "00003-" + new Date().getTime() + "-TestCoordJobInfoGetCommand-C";
-        addRecordToCoordJobTable(jobId3, CoordinatorJob.Status.KILLED);
+        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED);
         _testGetJobInfoForAppName();
         _testGetJobInfoForUser();
         _testGetJobInfoForUserAndStatus();

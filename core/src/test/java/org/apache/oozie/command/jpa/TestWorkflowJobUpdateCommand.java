@@ -14,8 +14,6 @@
  */
 package org.apache.oozie.command.jpa;
 
-import java.util.Date;
-
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.JPAService;
@@ -41,12 +39,11 @@ public class TestWorkflowJobUpdateCommand extends XDataTestCase {
     }
 
     public void testWorkflowJobUpdate() throws Exception {
-        String wfId = "00000-" + new Date().getTime() + "-TestWorkflowJobUpdateCommand-C";
-        addRecordToWfJobTable(wfId, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobGetCommand wfGetCmd = new WorkflowJobGetCommand(wfId);
+        WorkflowJobGetCommand wfGetCmd = new WorkflowJobGetCommand(job.getId());
         WorkflowJobBean wfBean = jpaService.execute(wfGetCmd);
 
         // first update;
@@ -54,7 +51,7 @@ public class TestWorkflowJobUpdateCommand extends XDataTestCase {
         WorkflowJobUpdateCommand wfUpdateCmd1 = new WorkflowJobUpdateCommand(wfBean);
         jpaService.execute(wfUpdateCmd1);
         WorkflowJobBean wfBean1 = jpaService.execute(wfGetCmd);
-        assertEquals(wfBean1.getId(), wfId);
+        assertEquals(wfBean1.getId(), job.getId());
         assertEquals(wfBean1.getStatusStr(), "SUCCEEDED");
 
         // second update;
@@ -63,7 +60,7 @@ public class TestWorkflowJobUpdateCommand extends XDataTestCase {
         WorkflowJobUpdateCommand wfUpdateCmd2 = new WorkflowJobUpdateCommand(wfBean);
         jpaService.execute(wfUpdateCmd2);
         WorkflowJobBean wfBean2 = jpaService.execute(wfGetCmd);
-        assertEquals(wfBean2.getId(), wfId);
+        assertEquals(wfBean2.getId(), job.getId());
         assertEquals(wfBean2.getStatusStr(), "RUNNING");
     }
 

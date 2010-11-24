@@ -14,7 +14,6 @@
  */
 package org.apache.oozie.command.jpa;
 
-import java.util.Date;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.local.LocalOozie;
@@ -42,9 +41,8 @@ public class TestCoordJobGetCommand extends XDataTestCase {
     }
 
     public void testCoordJobGet() throws Exception {
-        String jobId = "00000-" + new Date().getTime() + "-TestCoordinatorJobGetCommand-C";
-        addRecordToCoordJobTable(jobId, CoordinatorJob.Status.PREP);
-        _testGetJob(jobId);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP);
+        _testGetJob(job.getId());
     }
 
     private void _testGetJob(String jobId) throws Exception {

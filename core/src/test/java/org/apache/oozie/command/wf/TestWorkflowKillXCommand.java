@@ -52,26 +52,22 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfKillSuccess() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-testWfKill-W";
-        final int actionNum = 1;
-        final String actionId = wfId + "@" + actionNum;
-
-        this.addRecordToWfJobTable(wfId, WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfActionTable(wfId, actionNum, WorkflowAction.Status.PREP);
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(wfId);
-        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(actionId);
+        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(job.getId());
+        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
 
-        WorkflowJobBean job = jpaService.execute(wfJobGetCmd);
-        WorkflowActionBean action = jpaService.execute(wfActionGetCmd);
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
         assertEquals(job.getStatus(), WorkflowJob.Status.RUNNING);
         assertEquals(action.getStatus(), WorkflowAction.Status.PREP);
         WorkflowInstance wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
 
-        new WorkflowKillXCommand(wfId).call();
+        new WorkflowKillXCommand(job.getId()).call();
 
         job = jpaService.execute(wfJobGetCmd);
         action = jpaService.execute(wfActionGetCmd);
@@ -88,26 +84,23 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfKillFailed() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-testWfKill-W";
-        final int actionNum = 1;
-        final String actionId = wfId + "@" + actionNum;
 
-        this.addRecordToWfJobTable(wfId, WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfActionTable(wfId, actionNum, WorkflowAction.Status.OK);
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(wfId);
-        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(actionId);
+        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(job.getId());
+        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
 
-        WorkflowJobBean job = jpaService.execute(wfJobGetCmd);
-        WorkflowActionBean action = jpaService.execute(wfActionGetCmd);
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
         assertEquals(job.getStatus(), WorkflowJob.Status.RUNNING);
         assertEquals(action.getStatus(), WorkflowAction.Status.OK);
         WorkflowInstance wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
 
-        new WorkflowKillXCommand(wfId).call();
+        new WorkflowKillXCommand(job.getId()).call();
 
         job = jpaService.execute(wfJobGetCmd);
         action = jpaService.execute(wfActionGetCmd);
@@ -123,21 +116,18 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfKillFailedToLoadJob() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-testWfKill-W";
         final String testWfId = "0000001-" + new Date().getTime() + "-testWfKill-W";
-        final int actionNum = 1;
-        final String actionId = wfId + "@" + actionNum;
 
-        this.addRecordToWfJobTable(wfId, WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfActionTable(wfId, actionNum, WorkflowAction.Status.OK);
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(wfId);
-        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(actionId);
+        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(job.getId());
+        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
 
-        WorkflowJobBean job = jpaService.execute(wfJobGetCmd);
-        WorkflowActionBean action = jpaService.execute(wfActionGetCmd);
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
         assertEquals(job.getStatus(), WorkflowJob.Status.RUNNING);
         assertEquals(action.getStatus(), WorkflowAction.Status.OK);
         WorkflowInstance wfInstance = job.getWorkflowInstance();
