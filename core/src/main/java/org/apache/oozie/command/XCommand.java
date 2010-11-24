@@ -55,7 +55,7 @@ import java.util.Map;
 public abstract class XCommand<T> implements XCallable<T> {
     public static final String DEFAULT_LOCK_TIMEOUT = "oozie.command.default.lock.timeout";
 
-    private static final String INSTRUMENTATION_GROUP = "commands";
+    public static final String INSTRUMENTATION_GROUP = "commands";
 
     private static XLog LOG = XLog.getLog(XCommand.class);
 
@@ -78,7 +78,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     /**
      * Create a command.
-     * 
+     *
      * @param name command name.
      * @param type command type.
      * @param priority command priority.
@@ -88,6 +88,8 @@ public abstract class XCommand<T> implements XCallable<T> {
         this.type = type;
         this.priority = priority;
         createdTime = System.currentTimeMillis();
+        logInfo = new XLog.Info();
+        instrumentation = Services.get().get(InstrumentationService.class).get();
     }
 
     /**
@@ -98,16 +100,13 @@ public abstract class XCommand<T> implements XCallable<T> {
      *        really running the job
      */
     public XCommand(String name, String type, int priority, boolean dryrun) {
-        this.name = name;
-        this.type = type;
-        this.priority = priority;
-        createdTime = System.currentTimeMillis();
+        this(name, type, priority);
         this.dryrun = dryrun;
     }
 
     /**
      * Return the command name.
-     * 
+     *
      * @return the command name.
      */
     @Override
@@ -119,7 +118,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * Return the callable type.
      * <p/>
      * The command type is used for concurrency throttling in the {@link CallableQueueService}.
-     * 
+     *
      * @return the command type.
      */
     @Override
@@ -129,7 +128,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     /**
      * Return the priority of the command.
-     * 
+     *
      * @return the command priority.
      */
     @Override
@@ -139,7 +138,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     /**
      * Returns the creation time of the command.
-     * 
+     *
      * @return the command creation time, in milliseconds.
      */
     @Override
@@ -153,7 +152,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * All commands queued during the execution of the current command will be queued for a single serial execution.
      * <p/>
      * If the command execution throws an exception, no command will be effectively queued.
-     * 
+     *
      * @param command command to queue.
      */
     protected void queue(XCommand<?> command) {
@@ -167,7 +166,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * serial execution.
      * <p/>
      * If the command execution throws an exception, no command will be effectively queued.
-     * 
+     *
      * @param command command to queue.
      * @param msDelay delay in milliseconds.
      */
@@ -187,7 +186,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * Obtain an exclusive lock on the {link #getEntityKey}.
      * <p/>
      * A timeout of {link #getLockTimeOut} is used when trying to obtain the lock.
-     * 
+     *
      * @throws InterruptedException thrown if an interruption happened while trying to obtain the lock
      * @throws CommandException thrown i the lock could not be obtained.
      */
@@ -213,7 +212,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     /**
      * Implements the XCommand life-cycle.
-     * 
+     *
      * @return the {link #execute} return value.
      * @throws Exception thrown if the command could not be executed.
      */
@@ -300,7 +299,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * The value is loaded from the Oozie configuration, the property {link #DEFAULT_LOCK_TIMEOUT}.
      * <p/>
      * Subclasses should override this method if they want to use a different time out.
-     * 
+     *
      * @return the lock time out in milliseconds.
      */
     protected long getLockTimeOut() {
@@ -311,7 +310,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * Indicate if the the command requires locking.
      * <p/>
      * Subclasses should override this method if they require locking.
-     * 
+     *
      * @return <code>true/false</code>
      */
     protected abstract boolean isLockRequired();

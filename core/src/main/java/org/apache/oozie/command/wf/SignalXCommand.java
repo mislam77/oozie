@@ -24,6 +24,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.command.jpa.WorkflowActionGetCommand;
 import org.apache.oozie.command.jpa.WorkflowActionInsertCommand;
 import org.apache.oozie.command.jpa.WorkflowActionUpdateCommand;
@@ -62,14 +63,13 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
 
-    protected SignalXCommand(String name, int priority, String jobId) {
+    public SignalXCommand(String name, int priority, String jobId) {
         super(name, name, priority);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
     }
 
     public SignalXCommand(String jobId, String actionId) {
-        super("signal", "signal", 1);
-        this.jobId = ParamChecker.notEmpty(jobId, "jobId");
+        this("signal", 1, jobId);
         this.actionId = ParamChecker.notEmpty(actionId, "actionId");
     }
 
@@ -235,7 +235,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         XLog.getLog(getClass()).debug("Updated the workflow status to " + wfJob.getId() + "  status ="+ wfJob.getStatusStr());
         if (wfJob.getStatus() != WorkflowJob.Status.RUNNING
                 && wfJob.getStatus() != WorkflowJob.Status.SUSPENDED) {
-            //TODO queue(new CoordActionUpdateXCommand(wfJob));
+            queue(new CoordActionUpdateXCommand(wfJob));
         }
         LOG.debug("ENDED SignalCommand for jobid=" + jobId + ", actionId=" + actionId);
         return null;

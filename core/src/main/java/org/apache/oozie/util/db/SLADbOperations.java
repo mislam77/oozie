@@ -14,7 +14,6 @@
  */
 package org.apache.oozie.util.db;
 
-import java.sql.Timestamp;
 import java.util.Date;
 
 import org.apache.oozie.ErrorCode;
@@ -23,19 +22,14 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.jpa.SLAEventInsertCommand;
-import org.apache.oozie.command.wf.SubmitHttpXCommand;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StoreService;
-import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.SLAStore;
 import org.apache.oozie.store.Store;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.mortbay.log.Log;
 
 public class SLADbOperations {
     public static final String CLIENT_ID_TAG = "oozie:sla:client-id";
@@ -112,7 +106,7 @@ public class SLADbOperations {
         SLAStore slaStore = (SLAStore) Services.get().get(StoreService.class).getStore(SLAStore.class, store);
         slaStore.insertSLAEvent(sla);
     }
-    
+
     public static void writeSlaRegistrationEvent(Element eSla,
                                                  String slaId, SlaAppType appType, String user, String groupName, XLog log)
             throws Exception {
@@ -188,7 +182,7 @@ public class SLADbOperations {
         //SLAStore slaStore = (SLAStore) Services.get().get(StoreService.class)
         //        .getStore(SLAStore.class, store);
         //slaStore.insertSLAEvent(sla);
-        
+
         JPAService jpaService = Services.get().get(JPAService.class);
         if (jpaService != null) {
             jpaService.execute(new SLAEventInsertCommand(sla));
@@ -210,7 +204,7 @@ public class SLADbOperations {
                 .getStore(SLAStore.class, store);
         slaStore.insertSLAEvent(sla);
     }
-    
+
     public static void writeSlaStatusEvent(String id, Status status, SlaAppType appType, XLog log) throws Exception {
         SLAEventBean sla = new SLAEventBean();
         sla.setSlaId(id);
@@ -220,7 +214,7 @@ public class SLADbOperations {
         // System.out.println("Writing STATUS AAAAA " + id);
         //SLAStore slaStore = (SLAStore) Services.get().get(StoreService.class).getStore(SLAStore.class, store);
         //slaStore.insertSLAEvent(sla);
-        
+
         JPAService jpaService = Services.get().get(JPAService.class);
         if (jpaService != null) {
             jpaService.execute(new SLAEventInsertCommand(sla));
@@ -242,7 +236,7 @@ public class SLADbOperations {
             throw new CommandException(ErrorCode.E1007, " id " + id, e);
         }
     }
-    
+
     public static void writeStausEvent(String slaXml, String id, Status stat, SlaAppType appType, XLog log)
             throws CommandException {
         if (slaXml == null || slaXml.length() == 0) {

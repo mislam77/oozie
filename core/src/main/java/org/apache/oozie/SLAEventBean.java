@@ -17,7 +17,6 @@ package org.apache.oozie;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,7 +40,8 @@ import org.json.simple.JSONObject;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "GET_SLA_EVENT_NEWER_SEQ_LIMITED", query = "select OBJECT(w) from SLAEventBean w where w.event_id > :id order by w.event_id")})
+    @NamedQuery(name = "GET_SLA_EVENT_NEWER_SEQ_LIMITED", query = "select OBJECT(w) from SLAEventBean w where w.event_id > :id order by w.event_id"),
+    @NamedQuery(name = "GET_SLA_EVENTS", query = "select OBJECT(w) from SLAEventBean w")})
 public class SLAEventBean extends JsonSLAEvent implements Writable {
 
     @Basic
@@ -80,10 +80,12 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         this.jobStatusStr = jobStatusStr;
     }
 
+    @Override
     public Status getJobStatus() {
         return Status.valueOf(this.jobStatusStr);
     }
 
+    @Override
     public void setJobStatus(Status jobStatus) {
         super.setJobStatus(jobStatus);
         this.jobStatusStr = jobStatus.toString();
@@ -97,10 +99,12 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         this.appTypeStr = appTypeStr;
     }
 
+    @Override
     public SlaAppType getAppType() {
         return SlaAppType.valueOf(appTypeStr);
     }
 
+    @Override
     public void setAppType(SlaAppType appType) {
         super.setAppType(appType);
         this.appTypeStr = appType.toString();
@@ -110,10 +114,12 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         return expectedStartTS;
     }
 
+    @Override
     public Date getExpectedStart() {
         return DateUtils.toDate(expectedStartTS);
     }
 
+    @Override
     public void setExpectedStart(Date expectedStart) {
         super.setExpectedStart(expectedStart);
         this.expectedStartTS = DateUtils.convertDateToTimestamp(expectedStart);
@@ -123,10 +129,12 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         return expectedEndTS;
     }
 
+    @Override
     public Date getExpectedEnd() {
         return DateUtils.toDate(expectedEndTS);
     }
 
+    @Override
     public void setExpectedEnd(Date expectedEnd) {
         super.setExpectedEnd(expectedEnd);
         this.expectedEndTS = DateUtils.convertDateToTimestamp(expectedEnd);
@@ -136,10 +144,12 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         return statusTimestampTS;
     }
 
+    @Override
     public Date getStatusTimestamp() {
         return DateUtils.toDate(statusTimestampTS);
     }
 
+    @Override
     public void setStatusTimestamp(Date statusTimestamp) {
         super.setStatusTimestamp(statusTimestamp);
         this.statusTimestampTS = DateUtils.convertDateToTimestamp(statusTimestamp);
@@ -165,6 +175,7 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
 
     }
 
+    @Override
     public String toString() {
         return MessageFormat.format("Event id[{0}] status[{1}]", getEvent_id(),
                                     getJobStatus());

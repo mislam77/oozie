@@ -103,4 +103,8 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
         }
     }
 
+    public String getUrl() {
+        return url;
+    }
+
 }

@@ -169,6 +169,8 @@ public enum ErrorCode {
     E1101(XLog.STD, "SLA Nominal time is required."),
     E1102(XLog.STD, "SLA should-start can't be empty."),
 
+    E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
+
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 
     private String template;
