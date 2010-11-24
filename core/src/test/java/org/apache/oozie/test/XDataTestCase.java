@@ -231,7 +231,8 @@ public class XDataTestCase extends XFsTestCase {
         WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
                 .addNode(new EndNodeDef("end"));
         Configuration conf = new Configuration();
-        conf.set(OozieClient.APP_PATH, "testPath");
+        Path appUri = new Path(getAppPath(), "workflow.xml");
+        conf.set(OozieClient.APP_PATH, appUri.toString());
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
@@ -250,6 +251,11 @@ public class XDataTestCase extends XFsTestCase {
             throw ce;
         }
         return wfBean;
+    }
+
+    protected Path getAppPath() {
+        Path baseDir = getFsTestCaseDir();
+        return new Path(baseDir, "app");
     }
 
     /**
@@ -455,8 +461,9 @@ public class XDataTestCase extends XFsTestCase {
      */
     protected WorkflowActionBean createWorkflowAction(String wfId, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
-        action.setName("testAction");
-        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, "testAction"));
+        String actionname = "testAction";
+        action.setName(actionname);
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
         action.setJobId(wfId);
         action.setType("map-reduce");
         action.setTransition("transition");
@@ -466,6 +473,15 @@ public class XDataTestCase extends XFsTestCase {
         action.setLastCheckTime(new Date());
         action.resetPendingOnly();
 
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        FileSystem fs = getFileSystem();
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
         String actionXml = "<map-reduce>" +
         "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
         "<name-node>" + getNameNodeUri() + "</name-node>" +
@@ -474,8 +490,8 @@ public class XDataTestCase extends XFsTestCase {
         "</value></property>" +
         "<property><name>mapred.reducer.class</name><value>" + MapperReducerForTest.class.getName() +
         "</value></property>" +
-        "<property><name>mapred.input.dir</name><value>inputDir</value></property>" +
-        "<property><name>mapred.output.dir</name><value>outputDir</value></property>" +
+        "<property><name>mapred.input.dir</name><value>"+inputDir.toString()+"</value></property>" +
+        "<property><name>mapred.output.dir</name><value>"+outputDir.toString()+"</value></property>" +
         "</configuration>" +
         "</map-reduce>";
         action.setConf(actionXml);
