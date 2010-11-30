@@ -22,6 +22,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StartTransitionXCommand;
@@ -32,7 +33,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 
 public class BundleStartTransitionXCommand extends StartTransitionXCommand {
-    private String jobId;
+    private final String jobId;
     //TODO should change to JobBean
     private BundleJobBean bundleJob;
     private List<CoordinatorJobBean> coordBeans;
@@ -99,6 +100,11 @@ public class BundleStartTransitionXCommand extends StartTransitionXCommand {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+    }
+
+    @Override
+    public Job getJob() {
+        return bundleJob;
     }
 
 }

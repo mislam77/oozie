@@ -103,4 +103,12 @@ public interface Job {
      * @return the JOB end time.
      */
     Date getEndTime();
+
+    /**
+     * Set the status of the job
+     * 
+     * @param status
+     * @return
+     */
+    void setStatus(Job.Status status);
 }

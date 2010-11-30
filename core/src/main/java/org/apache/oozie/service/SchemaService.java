@@ -14,21 +14,19 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.ServiceException;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.util.IOUtils;
-import org.xml.sax.SAXException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.IOUtils;
+import org.xml.sax.SAXException;
 
 /**
  * Service that loads Oozie workflow definition schema and registered extension schemas.
@@ -41,6 +39,8 @@ public class SchemaService implements Service {
 
     public static final String COORD_CONF_EXT_SCHEMAS = CONF_PREFIX + "coord.ext.schemas";
 
+    public static final String BUNDLE_CONF_EXT_SCHEMAS = CONF_PREFIX + "bundle.ext.schemas";
+
     public static final String SLA_CONF_EXT_SCHEMAS = CONF_PREFIX + "sla.ext.schemas";
 
     public static final String SLA_NAME_SPACE_URI = "uri:oozie:sla:0.1";
@@ -51,12 +51,15 @@ public class SchemaService implements Service {
 
     private Schema slaSchema;
 
-    private static final String OOZIE_WORKFLOW_XSD[] = {"oozie-workflow-0.1.xsd", "oozie-workflow-0.2.xsd"};
-    private static final String OOZIE_COORDINATOR_XSD[] = {"oozie-coordinator-0.1.xsd"};
-    private static final String OOZIE_SLA_SEMANTIC_XSD[] = {"gms-oozie-sla-0.1.xsd"};
+    private Schema bundleSchema;
+
+    private static final String OOZIE_WORKFLOW_XSD[] = { "oozie-workflow-0.1.xsd", "oozie-workflow-0.2.xsd" };
+    private static final String OOZIE_COORDINATOR_XSD[] = { "oozie-coordinator-0.1.xsd" };
+    private static final String OOZIE_BUNDLE_XSD[] = { "oozie-bundle-0.1.xsd" };
+    private static final String OOZIE_SLA_SEMANTIC_XSD[] = { "gms-oozie-sla-0.1.xsd" };
 
     private Schema loadSchema(Configuration conf, String[] baseSchemas, String extSchema) throws SAXException,
-            IOException {
+    IOException {
         List<StreamSource> sources = new ArrayList<StreamSource>();
         for (String baseSchema : baseSchemas) {
             sources.add(new StreamSource(IOUtils.getResourceAsStream(baseSchema, -1)));
@@ -73,7 +76,7 @@ public class SchemaService implements Service {
 
     /**
      * Initialize the service.
-     *
+     * 
      * @param services services instance.
      * @throws ServiceException thrown if the service could not be initialized.
      */
@@ -82,6 +85,7 @@ public class SchemaService implements Service {
             wfSchema = loadSchema(services.getConf(), OOZIE_WORKFLOW_XSD, WF_CONF_EXT_SCHEMAS);
             coordSchema = loadSchema(services.getConf(), OOZIE_COORDINATOR_XSD, COORD_CONF_EXT_SCHEMAS);
             slaSchema = loadSchema(services.getConf(), OOZIE_SLA_SEMANTIC_XSD, SLA_CONF_EXT_SCHEMAS);
+            bundleSchema = loadSchema(services.getConf(), OOZIE_BUNDLE_XSD, BUNDLE_CONF_EXT_SCHEMAS);
         }
         catch (SAXException ex) {
             throw new ServiceException(ErrorCode.E0130, ex.getMessage(), ex);
@@ -93,7 +97,7 @@ public class SchemaService implements Service {
 
     /**
      * Return the public interface of the service.
-     *
+     * 
      * @return {@link SchemaService}.
      */
     public Class<? extends Service> getInterface() {
@@ -105,11 +109,14 @@ public class SchemaService implements Service {
      */
     public void destroy() {
         wfSchema = null;
+        bundleSchema = null;
+        slaSchema = null;
+        coordSchema = null;
     }
 
     /**
      * Return the schema for XML validation of application definitions.
-     *
+     * 
      * @param schemaName: Name of schema definition (i.e. WORKFLOW/COORDINATOR)
      * @return the schema for XML validation of application definitions.
      */
@@ -126,15 +133,20 @@ public class SchemaService implements Service {
                     return slaSchema;
                 }
                 else {
-                    throw new RuntimeException("No schema found with name " + schemaName);
+                    if (schemaName == SchemaName.BUNDLE) {
+                        return bundleSchema;
+                    }
+                    else {
+                        throw new RuntimeException("No schema found with name " + schemaName);
+                    }
                 }
             }
         }
     }
 
     public enum SchemaName {
-        WORKFLOW(1), COORDINATOR(2), SLA_ORIGINAL(3);
-        private int id;
+        WORKFLOW(1), COORDINATOR(2), SLA_ORIGINAL(3), BUNDLE(4);
+        private final int id;
 
         private SchemaName(int id) {
             this.id = id;

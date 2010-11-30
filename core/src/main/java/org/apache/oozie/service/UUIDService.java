@@ -14,14 +14,14 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.ErrorCode;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 
 /**
  * The UUID service generates unique IDs. <p/> The configuration property {@link #CONF_GENERATOR} specifies the ID
@@ -160,8 +160,8 @@ public class UUIDService implements Service {
     }
 
     public enum ApplicationType {
-        WORKFLOW('W'), COORDINATOR('C');
-        private char type;
+        WORKFLOW('W'), COORDINATOR('C'), BUNDLE('B');
+        private final char type;
 
         private ApplicationType(char type) {
             this.type = type;

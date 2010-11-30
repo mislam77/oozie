@@ -163,13 +163,17 @@ public enum ErrorCode {
     E1016(XLog.STD, "Cannot change a killed coordinator job"),
     E1017(XLog.STD, "Cannot change a workflow job"),
     E1018(XLog.STD, "Coord Job Rerun Error: {0}"),
-    
+
     E1100(XLog.STD, "Command precondition does not hold before execution"),
 
     E1101(XLog.STD, "SLA Nominal time is required."),
     E1102(XLog.STD, "SLA should-start can't be empty."),
 
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
+    
+    E1301(XLog.STD, "Could not read the bundle job definition, {0}"),
+    E1302(XLog.STD, "Invalid bundle application URI [{0}], {1}"),
+    E1303(XLog.STD, "Invalid bundle application attributes [{0}], {1}"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 
