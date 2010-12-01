@@ -87,6 +87,8 @@ public class OozieClient {
     
     public static final String BUNDLE_APP_PATH = "oozie.bundle.application.path";
 
+    public static final String BUNDLE_APP_PATH = "oozie.bundle.application.path";
+
     public static final String EXTERNAL_ID = "oozie.wf.external.id";
 
     public static final String WORKFLOW_NOTIFICATION_URL = "oozie.wf.workflow.notification.url";

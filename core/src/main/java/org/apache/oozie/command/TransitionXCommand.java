@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.command;
 
+import org.apache.oozie.client.Job;
 
 public abstract class TransitionXCommand<T> extends XCommand<T> {
 
@@ -28,5 +29,7 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
     public abstract void transitToNext() throws CommandException;
 
     public abstract void notifyParent() throws CommandException;
+
+    public abstract Job getJob();
 
 }
