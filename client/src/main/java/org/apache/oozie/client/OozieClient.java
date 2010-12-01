@@ -84,8 +84,6 @@ public class OozieClient {
     public static final String APP_PATH = "oozie.wf.application.path";
 
     public static final String COORDINATOR_APP_PATH = "oozie.coord.application.path";
-    
-    public static final String BUNDLE_APP_PATH = "oozie.bundle.application.path";
 
     public static final String BUNDLE_APP_PATH = "oozie.bundle.application.path";
 
