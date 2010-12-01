@@ -16,7 +16,6 @@ package org.apache.oozie.command.wf;
 
 import java.util.Date;
 
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
@@ -53,7 +52,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
      */
     public void testWfKillSuccess() throws Exception {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -86,7 +85,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
     public void testWfKillFailed() throws Exception {
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -119,7 +118,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         final String testWfId = "0000001-" + new Date().getTime() + "-testWfKill-W";
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -137,9 +136,6 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
             new WorkflowKillXCommand(testWfId).call();
             fail("Job doesn't exist. Should fail.");
         } catch (CommandException ce) {
-            if (ce.getErrorCode() != ErrorCode.E0604) {
-                fail("Error code should be E0604.");
-            }
         }
     }
 

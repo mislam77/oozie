@@ -262,12 +262,13 @@ public class XDataTestCase extends XFsTestCase {
      * Insert wf action for testing.
      *
      * @param wfId
+     * @param actionName TODO
      * @param status
      * @return action bean
      * @throws Exception
      */
-    protected WorkflowActionBean addRecordToWfActionTable(String wfId, WorkflowAction.Status status) throws Exception {
-        WorkflowActionBean action = createWorkflowAction(wfId, status);
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
+        WorkflowActionBean action = createWorkflowAction(wfId, actionName, status);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
@@ -455,15 +456,15 @@ public class XDataTestCase extends XFsTestCase {
      * Create workflow action bean
      *
      * @param wfId
+     * @param actionName TODO
      * @param status
      * @return workflow action bean
      * @throws Exception
      */
-    protected WorkflowActionBean createWorkflowAction(String wfId, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
-        String actionname = "testAction";
-        action.setName(actionname);
-        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
+        action.setName(actionName);
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
         action.setJobId(wfId);
         action.setType("map-reduce");
         action.setTransition("transition");

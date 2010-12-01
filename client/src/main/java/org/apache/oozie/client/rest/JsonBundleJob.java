@@ -149,7 +149,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getBundleName()
+     * @see org.apache.oozie.client.Job#getAppName()
      */
     @Override
     public String getAppName() {
@@ -157,7 +157,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getBundlePath()
+     * @see org.apache.oozie.client.Job#getAppPath()
      */
     @Override
     public String getAppPath() {
@@ -165,7 +165,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getConf()
+     * @see org.apache.oozie.client.Job#getConf()
      */
     @Override
     public String getConf() {
@@ -173,7 +173,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getConsoleUrl()
+     * @see org.apache.oozie.client.Job#getConsoleUrl()
      */
     @Override
     public String getConsoleUrl() {
@@ -190,7 +190,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getEndTime()
+     * @see org.apache.oozie.client.Job#getEndTime()
      */
     @Override
     public Date getEndTime() {
@@ -198,7 +198,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getGroup()
+     * @see org.apache.oozie.client.Job#getGroup()
      */
     @Override
     public String getGroup() {
@@ -206,7 +206,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getId()
+     * @see org.apache.oozie.client.Job#getId()
      */
     @Override
     public String getId() {
@@ -214,7 +214,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getKickoffTime()
+     * @see org.apache.oozie.client.Job#getKickoffTime()
      */
     @Override
     public Date getKickoffTime() {
@@ -222,7 +222,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getStatus()
+     * @see org.apache.oozie.client.Job#getStatus()
      */
     @Override
     public Status getStatus() {
@@ -246,7 +246,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.client.BundleJob#getUser()
+     * @see org.apache.oozie.client.Job#getUser()
      */
     @Override
     public String getUser() {
@@ -254,6 +254,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set id
+     *
      * @param id the id to set
      */
     public void setId(String id) {
@@ -261,6 +263,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set bundlePath
+     *
      * @param bundlePath the bundlePath to set
      */
     public void setAppPath(String bundlePath) {
@@ -268,6 +272,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set bundleName
+     *
      * @param bundleName the bundleName to set
      */
     public void setAppName(String bundleName) {
@@ -275,13 +281,17 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
-     * @ get the externalId
+     * Return externalId
+     *
+     * @return externalId
      */
     public String getExternalId() {
         return this.externalId;
     }
 
     /**
+     * Set externalId
+     *
      * @param externalId the externalId to set
      */
     public void setExternalId(String externalId) {
@@ -289,6 +299,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set conf
+     *
      * @param conf the conf to set
      */
     public void setConf(String conf) {
@@ -296,13 +308,18 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set status
+     *
      * @param status the status to set
      */
+    @Override
     public void setStatus(Status status) {
         this.status = status;
     }
 
     /**
+     * Set kickoffTime
+     *
      * @param kickoffTime the kickoffTime to set
      */
     public void setKickoffTime(Date kickoffTime) {
@@ -310,6 +327,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set startTime
+     *
      * @param kickoffTime the kickoffTime to set
      */
     public void setStartTime(Date startTime) {
@@ -317,6 +336,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set endTime
+     *
      * @param endTime the endTime to set
      */
     public void setEndTime(Date endTime) {
@@ -324,13 +345,17 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
-     * @param pauseTime the pauseTime to get
+     * Get pauseTime
+     *
+     * @return pauseTime
      */
     public Date getPauseTime() {
         return pauseTime;
     }
 
     /**
+     * Set pauseTime
+     *
      * @param pauseTime the pauseTime to set
      */
     public void setPauseTime(Date pauseTime) {
@@ -338,6 +363,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set timeUnit
+     *
      * @param timeUnit the timeUnit to set
      */
     public void setTimeUnit(Timeunit timeUnit) {
@@ -345,6 +372,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set timeOut
+     *
      * @param timeOut the timeOut to set
      */
     public void setTimeOut(int timeOut) {
@@ -352,6 +381,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set user
+     *
      * @param user the user to set
      */
     public void setUser(String user) {
@@ -359,6 +390,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set group
+     *
      * @param group the group to set
      */
     public void setGroup(String group) {
@@ -366,6 +399,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set consoleUrl
+     *
      * @param consoleUrl the consoleUrl to set
      */
     public void setConsoleUrl(String consoleUrl) {
@@ -373,6 +408,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set coordJobs
+     *
      * @param coordJobs the coordJobs to set
      */
     public void setCoordJobs(List<JsonCoordinatorJob> coordJobs) {
@@ -402,7 +439,6 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      * @param array JSON array.
      * @return the corresponding application list.
      */
-    @SuppressWarnings("unchecked")
     public static List<BundleJob> fromJSONArray(JSONArray applications) {
         List<BundleJob> list = new ArrayList<BundleJob>();
         for (Object obj : applications) {
@@ -411,8 +447,19 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         return list;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.Job#getStartTime()
+     */
     @Override
     public Date getStartTime() {
         return startTime;
     }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.Job#setPending()
+     */
+    @Override
+    public void setPending() {
+    }
+
 }

@@ -73,7 +73,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionStartXCommand startCmd = new ActionStartXCommand(action.getId(), "map-reduce");
@@ -93,7 +93,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.START_RETRY);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.START_RETRY);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionStartXCommand startCmd = new ActionStartXCommand(action.getId(), "map-reduce");
@@ -113,7 +113,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = super.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = super.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
         assertFalse(action.getPending());
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
@@ -129,7 +129,7 @@ public class TestActionStartXCommand extends XDataTestCase {
     public void testActionStart() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
         WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
 
         new ActionStartXCommand(action.getId(), "map-reduce").call();
@@ -157,7 +157,7 @@ public class TestActionStartXCommand extends XDataTestCase {
     }
 
     @Override
-    protected WorkflowActionBean addRecordToWfActionTable(String wfId, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = createWorkflowActionSetPending(wfId, status);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

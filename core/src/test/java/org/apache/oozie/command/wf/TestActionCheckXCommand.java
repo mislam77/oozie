@@ -73,7 +73,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId(), 10);
@@ -93,7 +93,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = super.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.RUNNING);
+        WorkflowActionBean action = super.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
@@ -113,7 +113,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
@@ -133,7 +133,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
@@ -148,7 +148,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
     public void testActionCheck() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
         WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
 
         new ActionStartXCommand(action.getId(), "map-reduce").call();
@@ -196,7 +196,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
     }
 
     @Override
-    protected WorkflowActionBean addRecordToWfActionTable(String wfId, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = createWorkflowActionSetPending(wfId, status);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

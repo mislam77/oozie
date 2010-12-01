@@ -35,7 +35,7 @@ public class JobUtils {
      * jobs via proxy submission, after normalization appPath always points to
      * job's Xml definition file.
      * <p/>
-     * 
+     *
      * @param user user
      * @param group group
      * @param conf job configuration.
@@ -45,18 +45,19 @@ public class JobUtils {
         if (user == null) {
             throw new IllegalArgumentException("user cannot be null");
         }
-        
+
         if (group == null) {
             throw new IllegalArgumentException("group cannot be null");
         }
-        
+
         if (conf.get(XOozieClient.IS_PROXY_SUBMISSION) != null) { // do nothing for proxy submission job;
             return;
         }
 
         String wfPathStr = conf.get(OozieClient.APP_PATH);
         String coordPathStr = conf.get(OozieClient.COORDINATOR_APP_PATH);
-        String appPathStr = wfPathStr != null ? wfPathStr : coordPathStr;
+        String bundlePathStr = conf.get(OozieClient.BUNDLE_APP_PATH);
+        String appPathStr = wfPathStr != null ? wfPathStr : (coordPathStr != null ? coordPathStr : bundlePathStr);
 
         FileSystem fs = null;
         try {
@@ -74,9 +75,9 @@ public class JobUtils {
 
         FileStatus fileStatus = fs.getFileStatus(appPath);
         Path appXml = appPath;
-        // Normalize appPath here - it will always point to a workflow/coordinator xml definition file;
+        // Normalize appPath here - it will always point to a workflow/coordinator/bundle xml definition file;
         if (fileStatus.isDir()) {
-            appXml = new Path(appPath, (wfPathStr != null)? "workflow.xml" : "coordinator.xml");
+            appXml = new Path(appPath, (wfPathStr != null)? "workflow.xml" : (coordPathStr != null ? "coordinator.xml" : "bundle.xml"));
             normalizedAppPathStr = appXml.toString();
         }
 
@@ -85,6 +86,9 @@ public class JobUtils {
         }
         else if (coordPathStr != null) {
             conf.set(OozieClient.COORDINATOR_APP_PATH, normalizedAppPathStr);
+        }
+        else if (bundlePathStr != null) {
+            conf.set(OozieClient.BUNDLE_APP_PATH, normalizedAppPathStr);
         }
     }
 }

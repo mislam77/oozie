@@ -135,9 +135,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     }
 
     public CoordSubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
-        super("coord_submit", "coord_submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
+        this(conf, authToken);
         this.dryrun = dryrun;
     }
 

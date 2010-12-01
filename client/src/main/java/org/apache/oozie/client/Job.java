@@ -29,86 +29,93 @@ public interface Job {
 
     /**
      * Return the path to the Oozie application.
-     * 
+     *
      * @return the path to the Oozie application.
      */
     String getAppPath();
 
     /**
      * Return the name of the Oozie application (from the application definition).
-     * 
+     *
      * @return the name of the Oozie application.
      */
     String getAppName();
 
     /**
      * Return the JOB ID.
-     * 
+     *
      * @return the JOB ID.
      */
     String getId();
 
     /**
      * Return the JOB configuration.
-     * 
+     *
      * @return the JOB configuration.
      */
     String getConf();
 
     /**
      * Return the JOB status.
-     * 
+     *
      * @return the JOB status.
      */
     Status getStatus();
 
     /**
      * Return the JOB user owner.
-     * 
+     *
      * @return the JOB user owner.
      */
     String getUser();
 
     /**
      * Return the JOB group.
-     * 
+     *
      * @return the JOB group.
      */
     String getGroup();
 
     /**
      * Return the JOB console URL.
-     * 
+     *
      * @return the JOB console URL.
      */
     String getConsoleUrl();
 
     /**
      * Return the JOB start time.
-     * 
+     *
      * @return the JOB start time.
      */
     Date getStartTime();
 
     /**
      * Return the JOB Kickoff time.
-     * 
+     *
      * @return the JOB Kickoff time.
      */
     Date getKickoffTime();
 
     /**
      * Return the JOB end time.
-     * 
+     *
      * @return the JOB end time.
      */
     Date getEndTime();
 
     /**
      * Set the status of the job
-     * 
+     *
      * @param status
-     * @return
      */
     void setStatus(Job.Status status);
+
+    /**
+     * Set pending to true
+     *
+     * @param pending set pending to true
+     */
+    void setPending();
+
 }

@@ -14,8 +14,6 @@
  */
 package org.apache.oozie.command.coord;
 
-import java.util.Date;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.OozieClient;
@@ -50,9 +48,8 @@ public class TestExternalIdXCommand extends XDataTestCase {
     }
 
     public void testExternalId() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestExternalIdXCommand-W";
-        addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-        _testGetExternalId(wfId);
+        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        _testGetExternalId(job.getId());
     }
 
     private void _testGetExternalId(String jobId) throws Exception {

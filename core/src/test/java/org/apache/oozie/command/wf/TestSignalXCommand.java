@@ -78,7 +78,7 @@ public class TestSignalXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         SignalXCommand signal = new SignalXCommand(job.getId(), action.getId());
@@ -98,7 +98,7 @@ public class TestSignalXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
         assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         SignalXCommand signal = new SignalXCommand(job.getId(), action.getId());
@@ -134,7 +134,7 @@ public class TestSignalXCommand extends XDataTestCase {
      */
     public void testSignalCall2() throws Exception {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
         new SignalXCommand(job.getId(), action.getId()).call();
 
@@ -151,9 +151,8 @@ public class TestSignalXCommand extends XDataTestCase {
     }
 
     @Override
-    protected WorkflowActionBean createWorkflowAction(String wfId, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
-        String actionName = "testAction";
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
         action.setJobId(wfId);
         action.setName(actionName);

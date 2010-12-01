@@ -44,9 +44,9 @@ public class TestWorkflowActionsGetForJobCommand extends XDataTestCase {
 
     public void testWfActionsGet() throws Exception {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
-        addRecordToWfActionTable(job.getId(), WorkflowAction.Status.OK);
-        addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
+        addRecordToWfActionTable(job.getId(), "2", WorkflowAction.Status.OK);
+        addRecordToWfActionTable(job.getId(), "3", WorkflowAction.Status.PREP);
         _testGetActions(job.getId());
     }
 

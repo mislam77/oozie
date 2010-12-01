@@ -14,8 +14,6 @@
  */
 package org.apache.oozie.command.jpa;
 
-import java.util.Date;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.OozieClient;
@@ -48,9 +46,8 @@ public class TestWorkflowIdGetForExternalIdCommand extends XDataTestCase {
     }
 
     public void testWfJobIdForExternalId() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestWorkflowIdGetForExternalIdCommand-W";
-        addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-        _testGetJobIdForExternalId(wfId);
+        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        _testGetJobIdForExternalId(job.getId());
     }
 
     private void _testGetJobIdForExternalId(String jobId) throws Exception {
@@ -59,7 +56,7 @@ public class TestWorkflowIdGetForExternalIdCommand extends XDataTestCase {
         WorkflowIdGetForExternalIdCommand wfIdGetCmd = new WorkflowIdGetForExternalIdCommand("external-id");
         String ret = jpaService.execute(wfIdGetCmd);
         assertNotNull(ret);
-        assertEquals(ret, jobId);
+        assertEquals(jobId, ret);
     }
 
     @Override

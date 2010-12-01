@@ -55,7 +55,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
     public void testWfActionKillSuccess() throws Exception {
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.KILLED);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -81,7 +81,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
     public void testWfActionKillFailed() throws Exception {
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), WorkflowAction.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -100,9 +100,8 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
     }
 
     @Override
-    protected WorkflowActionBean addRecordToWfActionTable(String wfId, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
-        String actionName = "testAction";
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
         action.setJobId(wfId);
         action.setName(actionName);

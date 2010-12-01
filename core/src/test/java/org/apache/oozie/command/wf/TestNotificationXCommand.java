@@ -61,24 +61,24 @@ public class TestNotificationXCommand extends XDataTestCase {
         final String wfId = "wfid-W";
         WorkflowJobBean wfBean = createWfBean2();
         wfBean.setId(wfId);
-        WorkflowActionBean actionBean = createWorkflowAction(wfId, WorkflowAction.Status.OK);
+        WorkflowActionBean actionBean = createWorkflowAction(wfId, "1", WorkflowAction.Status.OK);
 
         NotificationXCommand notifyCmd = new NotificationXCommand(wfBean, actionBean);
         String url = notifyCmd.getUrl();
         assertNotNull(url);
-        assertEquals("http://host/wfid-W/testAction/T:transition", url);
+        assertEquals("http://host/wfid-W/1/T:transition", url);
     }
 
     public void testNotification3() throws Exception {
         final String wfId = "wfid-W";
         WorkflowJobBean wfBean = createWfBean2();
         wfBean.setId(wfId);
-        WorkflowActionBean actionBean = createWorkflowAction(wfId, WorkflowAction.Status.RUNNING);
+        WorkflowActionBean actionBean = createWorkflowAction(wfId, "1", WorkflowAction.Status.RUNNING);
 
         NotificationXCommand notifyCmd = new NotificationXCommand(wfBean, actionBean);
         String url = notifyCmd.getUrl();
         assertNotNull(url);
-        assertEquals("http://host/wfid-W/testAction/S:RUNNING", url);
+        assertEquals("http://host/wfid-W/1/S:RUNNING", url);
     }
 
     private WorkflowJobBean createWfBean1() throws WorkflowException, Exception {

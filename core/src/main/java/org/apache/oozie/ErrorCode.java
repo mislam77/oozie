@@ -163,6 +163,7 @@ public enum ErrorCode {
     E1016(XLog.STD, "Cannot change a killed coordinator job"),
     E1017(XLog.STD, "Cannot change a workflow job"),
     E1018(XLog.STD, "Coord Job Rerun Error: {0}"),
+    E1019(XLog.STD, "Could not submit coord job, [{0}]"),
 
     E1100(XLog.STD, "Command precondition does not hold before execution"),
 
@@ -176,6 +177,8 @@ public enum ErrorCode {
     E1303(XLog.STD, "Invalid bundle application attributes [{0}], {1}"),
     E1304(XLog.STD, "Duplicate bundle application coordinator name [{0}]"),
     E1305(XLog.STD, "Empty bundle application coordinator name."),
+    E1306(XLog.STD, "Could not read the bundle job configuration, [{0}]"),
+    E1307(XLog.STD, "Could not read the bundle coord job configuration, [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

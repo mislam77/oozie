@@ -29,6 +29,7 @@ import javax.persistence.NamedQuery;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.BundleJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.JsonBundleJob;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
@@ -53,12 +54,12 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING')  order by w.lastModifiedTimestamp"),
 
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp") })
-    public class BundleJobBean extends JsonBundleJob implements Writable {
+public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic
     @Index
     @Column(name = "status")
-    private String status = BundleJob.Status.PREP.toString();
+    private String status = Job.Status.PREP.toString();
 
     @Basic
     @Column(name = "auth_token")
@@ -89,6 +90,10 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @Basic
     @Column(name = "time_unit")
     private String timeUnitStr = BundleJob.Timeunit.NONE.toString();
+
+    @Basic
+    @Column(name = "pending")
+    private int pending = 0;
 
     @Basic
     @Index
@@ -194,6 +199,34 @@ import org.apache.openjpa.persistence.jdbc.Index;
      */
     public String getTimeUnitStr() {
         return timeUnitStr;
+    }
+
+    /**
+     * Set pending to true
+     *
+     * @param pending set pending to true
+     */
+    @Override
+    public void setPending() {
+        this.pending = 1;
+    }
+
+    /**
+     * Set pending to false
+     *
+     * @param pending set pending to false
+     */
+    public void resetPending() {
+        this.pending = 0;
+    }
+
+    /**
+     * Return if the action is pending.
+     *
+     * @return if the action is pending.
+     */
+    public boolean isPending() {
+        return pending == 1 ? true : false;
     }
 
     /**

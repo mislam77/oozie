@@ -42,7 +42,7 @@ public class TestWorkflowActionGetCommand extends XDataTestCase {
 
     public void testWfActionGet() throws Exception {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), WorkflowAction.Status.PREP);
+        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
         _testGetAction(action.getId());
     }
 

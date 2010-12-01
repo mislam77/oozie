@@ -31,22 +31,23 @@ public interface BundleJob extends Job {
 
     /**
      * Return the timeUnit for the Bundle job, it could be, Timeunit enum, e.g. MINUTE, HOUR, DAY, WEEK or MONTH
-     * 
+     *
      * @return the time unit for the Bundle job
      */
     Timeunit getTimeUnit();
 
     /**
      * Return the time out value for all the coord jobs within Bundle
-     * 
+     *
      * @return the time out value for the coord jobs within Bundle
      */
     int getTimeout();
 
     /**
      * Return the list of CoordinatorJob.
-     * 
+     *
      * @return the list of CoordinatorJob.
      */
     List<CoordinatorJob> getCoordinators();
+
 }

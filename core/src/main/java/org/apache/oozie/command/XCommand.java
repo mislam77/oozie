@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.command;
 
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -375,6 +376,24 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @throws CommandException thrown if the command execution failed.
      */
     protected abstract T execute() throws CommandException;
+
+    /**
+     * Set the log info with the context of the given bundle bean.
+     *
+     * @param bBean bundle bean.
+     */
+    protected void setLogInfo(BundleJobBean bBean) {
+        if (logInfo.getParameter(XLogService.GROUP) == null) {
+            logInfo.setParameter(XLogService.GROUP, bBean.getGroup());
+        }
+        if (logInfo.getParameter(XLogService.USER) == null) {
+            logInfo.setParameter(XLogService.USER, bBean.getUser());
+        }
+        logInfo.setParameter(DagXLogInfoService.JOB, bBean.getId());
+        logInfo.setParameter(DagXLogInfoService.TOKEN, "");
+        logInfo.setParameter(DagXLogInfoService.APP, bBean.getAppName());
+        XLog.Info.get().setParameters(logInfo);
+    }
 
     /**
      * Set the log info with the context of the given coordinator bean.

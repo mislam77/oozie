@@ -107,21 +107,18 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillFailed() throws Exception {
-        final String jobId = "0000000-" + new Date().getTime() + "-testCoordKill-C";
         final String testJobId = "0000001-" + new Date().getTime() + "-testCoordKill-C";
-        final int actionNum = 1;
-        final String actionId = jobId + "@" + actionNum;
 
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
-        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml");
+        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        CoordJobGetCommand coordJobGetCmd = new CoordJobGetCommand(jobId);
-        CoordActionGetCommand coordActionGetCmd = new CoordActionGetCommand(actionId);
+        CoordJobGetCommand coordJobGetCmd = new CoordJobGetCommand(job.getId());
+        CoordActionGetCommand coordActionGetCmd = new CoordActionGetCommand(action.getId());
 
         job = jpaService.execute(coordJobGetCmd);
-        CoordinatorActionBean action = jpaService.execute(coordActionGetCmd);
+        action = jpaService.execute(coordActionGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.SUCCEEDED);
         assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
 

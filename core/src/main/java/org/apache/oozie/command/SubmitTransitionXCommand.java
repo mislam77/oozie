@@ -27,7 +27,7 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
     protected final XLog LOG = XLog.getLog(SubmitTransitionXCommand.class);
 
     /**
-     * @return
+     * @return String
      * @throws CommandException
      */
     public abstract String submit() throws CommandException;
