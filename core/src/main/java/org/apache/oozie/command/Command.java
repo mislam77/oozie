@@ -433,7 +433,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
         }
         logInfo.setParameter(DagXLogInfoService.JOB, bBean.getId());
         logInfo.setParameter(DagXLogInfoService.TOKEN, "");
-        logInfo.setParameter(DagXLogInfoService.APP, bBean.getBundleName());
+        logInfo.setParameter(DagXLogInfoService.APP, bBean.getAppName());
         XLog.Info.get().setParameters(logInfo);
     }
 

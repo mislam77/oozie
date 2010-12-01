@@ -146,7 +146,7 @@ public class BundleSubmitCommand extends BundleCommand<String> {
         }
         catch (IllegalArgumentException iex) {
             log.warn("ERROR:  ", iex);
-            throw new CommandException(ErrorCode.E1103, iex);
+            throw new CommandException(ErrorCode.E1303, iex);
         }
         catch (Exception ex) {
             log.warn("ERROR:  ", ex);
@@ -257,18 +257,18 @@ public class BundleSubmitCommand extends BundleCommand<String> {
         }
         catch (IOException ioex) {
             log.warn("IOException :" + XmlUtils.prettyPrint(confHadoop), ioex);
-            throw new BundleJobException(ErrorCode.E1101, ioex.getMessage(), ioex);
+            throw new BundleJobException(ErrorCode.E1301, ioex.getMessage(), ioex);
         }
         catch (URISyntaxException uex) {
             log.warn("URISyException :" + uex.getMessage());
-            throw new BundleJobException(ErrorCode.E1102, appPath, uex.getMessage(), uex);
+            throw new BundleJobException(ErrorCode.E1302, appPath, uex.getMessage(), uex);
         }
         catch (HadoopAccessorException hex) {
             throw new BundleJobException(hex);
         }
         catch (Exception ex) {
             log.warn("Exception :", ex);
-            throw new BundleJobException(ErrorCode.E1101, ex.getMessage(), ex);
+            throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex);
         }
     }
 
@@ -285,9 +285,9 @@ public class BundleSubmitCommand extends BundleCommand<String> {
         String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE);
         bundleJob.setId(jobId);
         bundleJob.setAuthToken(this.authToken);
-        bundleJob.setBundleName(jobXml.getAttributeValue("name"));
+        bundleJob.setAppName(jobXml.getAttributeValue("name"));
         bundleJob.setCreatedTime(new Date());
-        bundleJob.setBundlePath(conf.get(OozieClient.BUNDLE_APP_PATH));
+        bundleJob.setAppPath(conf.get(OozieClient.BUNDLE_APP_PATH));
         bundleJob.setStatus(BundleJob.Status.PREP);
         bundleJob.setUser(conf.get(OozieClient.USER_NAME));
         bundleJob.setGroup(conf.get(OozieClient.GROUP_NAME));
