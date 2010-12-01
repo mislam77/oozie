@@ -30,6 +30,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.apache.oozie.client.BundleJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.CoordinatorJob;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -58,7 +59,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     private String conf = null;
 
     @Transient
-    private Status status = BundleJob.Status.PREP;
+    private Status status = Job.Status.PREP;
 
     @Transient
     private Date kickoffTime;

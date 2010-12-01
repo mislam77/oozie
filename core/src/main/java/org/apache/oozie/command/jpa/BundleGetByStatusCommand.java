@@ -51,8 +51,6 @@ public class BundleGetByStatusCommand implements JPACommand<List<BundleJobBean>>
     @Override
     @SuppressWarnings("unchecked")
     public List<BundleJobBean> execute(EntityManager em) throws CommandException {
-        em.getTransaction().begin();
-
         List<BundleJobBean> bjBeans;
         List<BundleJobBean> jobList = new ArrayList<BundleJobBean>();
         try {
@@ -71,7 +69,6 @@ public class BundleGetByStatusCommand implements JPACommand<List<BundleJobBean>>
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0603, e);
         }
-        em.getTransaction().commit();
         return jobList;
     }
 }

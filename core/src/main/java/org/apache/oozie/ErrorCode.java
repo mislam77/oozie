@@ -170,14 +170,12 @@ public enum ErrorCode {
     E1102(XLog.STD, "SLA should-start can't be empty."),
 
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
-    
-    E1301(XLog.STD, "Could not read the bundle job definition, {0}"),
+
+    E1301(XLog.STD, "Could not read the bundle job definition, [{0}]"),
     E1302(XLog.STD, "Invalid bundle application URI [{0}], {1}"),
     E1303(XLog.STD, "Invalid bundle application attributes [{0}], {1}"),
-
-    E1101(XLog.STD, "Could not read the bundle job definition, {0}"),
-    E1102(XLog.STD, "Invalid bundle application URI [{0}], {1}"),
-    E1103(XLog.STD, "Invalid bundle application attributes [{0}], {1}"),
+    E1304(XLog.STD, "Duplicate bundle application coordinator name [{0}]"),
+    E1305(XLog.STD, "Empty bundle application coordinator name."),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

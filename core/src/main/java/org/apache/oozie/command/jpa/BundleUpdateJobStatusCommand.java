@@ -43,7 +43,6 @@ public class BundleUpdateJobStatusCommand implements JPACommand<String> {
 
     @Override
     public String execute(EntityManager em) throws CommandException {
-        em.getTransaction().begin();
         try {
             Query q = em.createNamedQuery("UPDATE_BUNDLE_JOB_STATUS");
             q.setParameter("id", bundleJob.getId());
@@ -54,7 +53,6 @@ public class BundleUpdateJobStatusCommand implements JPACommand<String> {
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0603, e);
         }
-        em.getTransaction().commit();
         return null;
     }
 }

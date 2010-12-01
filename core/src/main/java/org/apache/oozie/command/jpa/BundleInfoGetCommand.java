@@ -25,7 +25,7 @@ import javax.persistence.Query;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.BundleJobInfo;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.BundleJob.Status;
+import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.BundleJob.Timeunit;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.store.StoreStatusFilter;
@@ -61,8 +61,6 @@ public class BundleInfoGetCommand implements JPACommand<BundleJobInfo> {
     @Override
     @SuppressWarnings("unchecked")
     public BundleJobInfo execute(EntityManager em) throws CommandException {
-        em.getTransaction().begin();
-
         List<String> orArray = new ArrayList<String>();
         List<String> colArray = new ArrayList<String>();
         List<String> valArray = new ArrayList<String>();
@@ -118,7 +116,6 @@ public class BundleInfoGetCommand implements JPACommand<BundleJobInfo> {
             throw new CommandException(ErrorCode.E0603, e);
         }
 
-        em.getTransaction().commit();
         return info;
     }
 
@@ -126,7 +123,7 @@ public class BundleInfoGetCommand implements JPACommand<BundleJobInfo> {
         BundleJobBean bean = new BundleJobBean();
         bean.setId((String) arr[0]);
         if (arr[1] != null) {
-            bean.setBundleName((String) arr[1]);
+            bean.setAppName((String) arr[1]);
         }
         if (arr[2] != null) {
             bean.setStatus(Status.valueOf((String) arr[2]));
@@ -144,7 +141,7 @@ public class BundleInfoGetCommand implements JPACommand<BundleJobInfo> {
             bean.setEndTime((Timestamp) arr[6]);
         }
         if (arr[7] != null) {
-            bean.setBundlePath((String) arr[7]);
+            bean.setAppPath((String) arr[7]);
         }
         if (arr[13] != null) {
             bean.setTimeUnit(Timeunit.valueOf((String) arr[13]));

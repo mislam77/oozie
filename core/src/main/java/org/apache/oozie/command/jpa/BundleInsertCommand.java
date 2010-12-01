@@ -22,7 +22,7 @@ import org.apache.oozie.util.ParamChecker;
 /**
  * Persist the BundleJob bean.
  */
-public class BundleInsertCommand implements JPACommand<String> {
+public class BundleInsertCommand implements JPACommand<Void> {
 
     private BundleJobBean bundleJob = null;
 
@@ -37,10 +37,8 @@ public class BundleInsertCommand implements JPACommand<String> {
     }
 
     @Override
-    public String execute(EntityManager em) throws CommandException {
-        em.getTransaction().begin();
+    public Void execute(EntityManager em) throws CommandException {
         em.persist(bundleJob);
-        em.getTransaction().commit();
         return null;
     }
 }

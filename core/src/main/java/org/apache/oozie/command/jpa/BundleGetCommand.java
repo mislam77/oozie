@@ -44,7 +44,6 @@ public class BundleGetCommand implements JPACommand<BundleJobBean> {
     @Override
     @SuppressWarnings("unchecked")
     public BundleJobBean execute(EntityManager em) throws CommandException {
-        em.getTransaction().begin();
         List<BundleJobBean> bdBeans;
         try {
             Query q = em.createNamedQuery("GET_BUNDLE_JOB");
@@ -54,7 +53,6 @@ public class BundleGetCommand implements JPACommand<BundleJobBean> {
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0603, e);
         }
-        em.getTransaction().commit();
 
         BundleJobBean bean = null;
         if (bdBeans != null && bdBeans.size() > 0) {

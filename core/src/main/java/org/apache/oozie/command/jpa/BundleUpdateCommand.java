@@ -14,20 +14,15 @@
  */
 package org.apache.oozie.command.jpa;
 
-import java.util.Date;
-
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
 import org.apache.oozie.BundleJobBean;
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.util.ParamChecker;
 
 /**
  *  Update the given bundle job bean to DB.
  */
-public class BundleUpdateCommand implements JPACommand<String> {
+public class BundleUpdateCommand implements JPACommand<Void> {
 
     private BundleJobBean bundleJob = null;
 
@@ -42,35 +37,9 @@ public class BundleUpdateCommand implements JPACommand<String> {
     }
 
     @Override
-    public String execute(EntityManager em) throws CommandException {
-        em.getTransaction().begin();
-        try {
-            Query q = em.createNamedQuery("UPDATE_BUNDLE_JOB");
-            q.setParameter("id", bundleJob.getId());
-            setJobQueryParameters(bundleJob, q);
-            q.executeUpdate();
-        }
-        catch (Exception e) {
-            throw new CommandException(ErrorCode.E0603, e);
-        }
-        em.getTransaction().commit();
+    public Void execute(EntityManager em) throws CommandException {
+        em.merge(bundleJob);
         return null;
     }
 
-    private void setJobQueryParameters(BundleJobBean jBean, Query q) {
-        q.setParameter("bundleName", jBean.getBundleName());
-        q.setParameter("bundlePath", jBean.getBundlePath());
-        q.setParameter("conf", jBean.getConf());
-        q.setParameter("externalId", jBean.getExternalId());
-        q.setParameter("timeOut", jBean.getTimeout());
-        q.setParameter("authToken", jBean.getAuthToken());
-        q.setParameter("createdTime", jBean.getCreatedTimestamp());
-        q.setParameter("endTime", jBean.getEndTimestamp());
-        q.setParameter("jobXml", jBean.getJobXml());
-        q.setParameter("lastModifiedTime", new Date());
-        q.setParameter("origJobXml", jBean.getOrigJobXml());
-        q.setParameter("kickoffTime", jBean.getKickoffTimestamp());
-        q.setParameter("status", jBean.getStatus().toString());
-        q.setParameter("timeUnit", jBean.getTimeUnitStr());
-    }
 }
