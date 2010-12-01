@@ -47,6 +47,9 @@ public class CoordJobMatLookupXCommand extends CoordinatorXCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         Timestamp startTime = coordJob.getNextMaterializedTimestamp();
+        if (startTime == null) {
+            startTime = coordJob.getStartTimestamp();
+        }
         // calculate end time by adding materializationWindow to start time.
         // need to convert materializationWindow from secs to milliseconds
         long startTimeMilli = startTime.getTime();

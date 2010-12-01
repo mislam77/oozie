@@ -19,8 +19,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
+import org.apache.oozie.DagXEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -145,7 +145,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
             // log.debug("%%% merged runconf=" +
             // XmlUtils.prettyPrint(runConf).toString());
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, authToken);
+            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(user, authToken);
             try {
                 boolean startJob = true;
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));

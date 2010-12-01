@@ -35,14 +35,14 @@ import org.apache.oozie.util.XConfiguration;
  */
 public class LocalOozieClient extends OozieClient {
 
-    private DagEngine dagEngine;
+    private DagXEngine dagEngine;
 
     /**
      * Create a workflow client for Oozie local use. <p/>
      *
      * @param dagEngine the dag engine instance to use.
      */
-    public LocalOozieClient(DagEngine dagEngine) {
+    public LocalOozieClient(DagXEngine dagEngine) {
         this.dagEngine = dagEngine;
     }
 

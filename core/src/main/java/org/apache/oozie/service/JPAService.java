@@ -18,6 +18,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.FaultInjection;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -183,6 +184,10 @@ public class JPAService implements Service, Instrumentable {
             em.getTransaction().begin();
             T t = command.execute(em);
             if (em.getTransaction().isActive()) {
+                if (FaultInjection.isActive("org.apache.oozie.command.SkipCommitFaultInjection")) {
+                    throw new RuntimeException("Skipping Commit for Failover Testing");
+                }
+
                 em.getTransaction().commit();
             }
             return t;

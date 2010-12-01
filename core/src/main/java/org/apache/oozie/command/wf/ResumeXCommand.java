@@ -27,6 +27,7 @@ import org.apache.oozie.command.jpa.WorkflowJobGetActionsCommand;
 import org.apache.oozie.command.jpa.WorkflowJobGetCommand;
 import org.apache.oozie.command.jpa.WorkflowJobUpdateCommand;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -116,6 +117,10 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
 
     @Override
     protected void loadState() throws CommandException {
+        jpaService = Services.get().get(JPAService.class);
+        if (jpaService == null) {
+            throw new CommandException(ErrorCode.E0610);
+        }
         workflow = jpaService.execute(new WorkflowJobGetCommand(id));
         setLogInfo(workflow);
     }

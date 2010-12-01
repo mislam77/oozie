@@ -105,6 +105,7 @@ public class TestRerun extends XFsTestCase {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
             }
         });
+        
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
 
         //getting external IDs of all actions on first run

@@ -14,6 +14,8 @@
 */
 package org.apache.oozie.command.jpa;
 
+import java.util.Date;
+
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.WorkflowJobBean;
@@ -40,8 +42,8 @@ public class WorkflowJobUpdateCommand implements JPACommand<String> {
 
     @Override
     public String execute(EntityManager em) throws CommandException {
-
         try {
+            wfJob.setLastModifiedTime(new Date());
             em.merge(wfJob);
             return null;
         }

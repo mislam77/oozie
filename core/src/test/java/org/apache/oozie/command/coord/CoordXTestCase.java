@@ -18,7 +18,7 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
-public class CoordXTestCase extends XTestCase {
+public abstract class CoordXTestCase extends XTestCase {
     protected Services services;
     protected JPAService jpaService;
 

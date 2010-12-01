@@ -68,7 +68,7 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-public class XDataTestCase extends XFsTestCase {
+public abstract class XDataTestCase extends XFsTestCase {
 
     /**
      * Insert coord job for testing.

@@ -1,5 +1,7 @@
 package org.apache.oozie.command.jpa;
 
+import java.util.Date;
+
 import javax.persistence.EntityManager;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
@@ -30,6 +32,7 @@ public class CoordActionUpdateCommand implements JPACommand<Void> {
     @Override
     public Void execute(EntityManager em) throws CommandException {
         try {
+            coordAction.setLastModifiedTime(new Date());
             em.merge(coordAction);
             return null;
         }
