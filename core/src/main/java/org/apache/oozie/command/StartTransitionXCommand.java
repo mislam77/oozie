@@ -14,11 +14,14 @@
  */
 package org.apache.oozie.command;
 
+import org.apache.oozie.client.Job;
 import org.apache.oozie.util.XLog;
 
 public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
 
     protected final XLog LOG = XLog.getLog(KillTransitionXCommand.class);
+
+    private Job job;
 
     public abstract void StartChildren() throws CommandException;
 
@@ -31,10 +34,17 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
     }
 
     @Override
+    public void transitToNext() {
+        job.setStatus(Job.Status.RUNNING);
+        job.setPending();
+    }
+
+    @Override
     protected Void execute() throws CommandException {
         loadState();
-        StartChildren();
+        job = this.getJob();
         transitToNext();
+        StartChildren();
         notifyParent();
         return null;
     }

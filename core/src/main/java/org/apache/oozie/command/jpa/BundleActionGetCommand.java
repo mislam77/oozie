@@ -19,48 +19,52 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load the BundleJob into a Bean and return it.
+ * Load the BundleAction into a Bean and return it.
  */
-public class BundleGetCommand implements JPACommand<BundleJobBean> {
+public class BundleActionGetCommand implements JPACommand<BundleActionBean> {
 
     private String bundleId = null;
+    private String coordName = null;
 
-    public BundleGetCommand(String bundleId) {
+    public BundleActionGetCommand(String bundleId, String coordName) {
         ParamChecker.notNull(bundleId, "bundleId");
+        ParamChecker.notNull(coordName, "coordName");
         this.bundleId = bundleId;
+        this.coordName = coordName;
     }
 
     @Override
     public String getName() {
-        return "BundleGetCommand";
+        return "BundleActionGetCommand";
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public BundleJobBean execute(EntityManager em) throws CommandException {
-        List<BundleJobBean> bdBeans;
+    public BundleActionBean execute(EntityManager em) throws CommandException {
+        List<BundleActionBean> baBeans;
         try {
-            Query q = em.createNamedQuery("GET_BUNDLE_JOB");
-            q.setParameter("id", bundleId);
-            bdBeans = q.getResultList();
+            Query q = em.createNamedQuery("GET_BUNDLE_ACTION");
+            q.setParameter("bundleId", bundleId);
+            q.setParameter("coordName", coordName);
+            baBeans = q.getResultList();
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0603, e);
         }
 
-        BundleJobBean bean = null;
-        if (bdBeans != null && bdBeans.size() > 0) {
-            bean = bdBeans.get(0);
+        BundleActionBean bean = null;
+        if (baBeans != null && baBeans.size() > 0) {
+            bean = baBeans.get(0);
             return bean;
         }
         else {
-            throw new CommandException(ErrorCode.E0604, bundleId);
+            throw new CommandException(ErrorCode.E0605, bundleId, coordName);
         }
     }
 }

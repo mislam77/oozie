@@ -15,30 +15,31 @@
 package org.apache.oozie.command.jpa;
 
 import javax.persistence.EntityManager;
-import org.apache.oozie.BundleJobBean;
+
+import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Persist the BundleJob bean.
+ * Persist the BundleAction bean.
  */
-public class BundleInsertCommand implements JPACommand<Void> {
+public class BundleActionInsertCommand implements JPACommand<Void> {
 
-    private BundleJobBean bundleJob = null;
+    private BundleActionBean bundleAction = null;
 
-    public BundleInsertCommand(BundleJobBean bundleJob) {
-        ParamChecker.notNull(bundleJob, "bundleJob");
-        this.bundleJob = bundleJob;
+    public BundleActionInsertCommand(BundleActionBean bundleAction) {
+        ParamChecker.notNull(bundleAction, "bundleAction");
+        this.bundleAction = bundleAction;
     }
 
     @Override
     public String getName() {
-        return "BundleInsertCommand";
+        return "BundleActionInsertCommand";
     }
 
     @Override
     public Void execute(EntityManager em) throws CommandException {
-        em.persist(bundleJob);
+        em.persist(bundleAction);
         return null;
     }
 }

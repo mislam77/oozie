@@ -24,49 +24,51 @@ import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.StartTransitionXCommand;
 import org.apache.oozie.command.jpa.BundleJobGetCommand;
 import org.apache.oozie.command.jpa.CoordJobsGetForBundleCommand;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 
-public class BundleStartTransitionXCommand extends StartTransitionXCommand {
-    private final String jobId;
+public class BundleKillXCommand extends KillTransitionXCommand {
+    private String jobId;
     //TODO should change to JobBean
     private BundleJobBean bundleJob;
     private List<CoordinatorJobBean> coordBeans;
     private JPAService jpaService = null;
 
-    public BundleStartTransitionXCommand(String jobId) {
-        super("bundle_start", "bundle_start", 1);
+    public BundleKillXCommand(String jobId) {
+        super("bundle_kill", "bundle_kill", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
     }
 
-    public BundleStartTransitionXCommand(String jobId, boolean dryrun) {
-        super("bundle_start", "bundle_start", 1, dryrun);
+    public BundleKillXCommand(String jobId, boolean dryrun) {
+        super("bundle_kill", "bundle_kill", 1, dryrun);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
     }
+
 
     @Override
-    public void StartChildren() {
+    public void killChildren() {
         if (coordBeans != null) {
             for (CoordinatorJobBean cBean :coordBeans) {
-                cBean.setStatus(CoordinatorJob.Status.PREP);
+                cBean.setStatus(CoordinatorJob.Status.KILLED);
             }
         }
-        LOG.debug("Started coord jobs for the bundle=[{0}]", jobId);
+        LOG.debug("Killed coord jobs for the bundle=[{0}]", jobId);
     }
 
     @Override
     public void transitToNext() {
-        this.bundleJob.setStatus(BundleJob.Status.RUNNING);
+        if (bundleJob!= null) {
+            this.bundleJob.setStatus(BundleJob.Status.KILLED);
+        }
     }
 
     @Override
     public void notifyParent() {
-
     }
 
     @Override
