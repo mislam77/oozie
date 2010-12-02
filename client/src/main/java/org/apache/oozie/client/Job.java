@@ -118,4 +118,11 @@ public interface Job {
      */
     void setPending();
 
+    /**
+     * Set pending to
+     *
+     * @param pending set pending to false
+     */
+    void resetPending();
+
 }

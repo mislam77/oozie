@@ -33,7 +33,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 
 public class BundleKillXCommand extends KillTransitionXCommand {
-    private String jobId;
+    private final String jobId;
     //TODO should change to JobBean
     private BundleJobBean bundleJob;
     private List<CoordinatorJobBean> coordBeans;
@@ -107,6 +107,11 @@ public class BundleKillXCommand extends KillTransitionXCommand {
     @Override
     public Job getJob() {
         return bundleJob;
+    }
+
+    @Override
+    public void setJob(Job job) {
+        this.bundleJob = (BundleJobBean) job;
     }
 
 }

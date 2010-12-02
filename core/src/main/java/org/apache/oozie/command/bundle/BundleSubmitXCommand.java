@@ -34,7 +34,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
@@ -69,7 +68,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     public static final String CONFIG_DEFAULT = "bundle-config-default.xml";
     public static final String BUNDLE_XML_FILE = "bundle.xml";
     private final XLog log = XLog.getLog(getClass());
-    private final BundleJobBean bundleBean = new BundleJobBean();
+    private BundleJobBean bundleBean = new BundleJobBean();
     private String jobId;
     private JPAService jpaService = null;
 
@@ -248,7 +247,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         Path configDefault = new Path(conf.get(OozieClient.BUNDLE_APP_PATH), CONFIG_DEFAULT);
         CoordUtils.getHadoopConf(conf);
         FileSystem fs;
-        // TODO: which conf?
         try {
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
@@ -281,7 +279,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @throws BundleJobException
      */
     private String readAndValidateXml() throws BundleJobException {
-        String appPath = ParamChecker.notEmpty(conf.get(OozieClient.BUNDLE_APP_PATH), OozieClient.BUNDLE_APP_PATH);// TODO:
+        String appPath = ParamChecker.notEmpty(conf.get(OozieClient.BUNDLE_APP_PATH), OozieClient.BUNDLE_APP_PATH);
         String bundleXml = readDefinition(appPath);
         validateXml(bundleXml);
         return bundleXml;
@@ -308,25 +306,25 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                     new Configuration());
             Path p = new Path(uri.getPath());
 
-            Reader reader = new InputStreamReader(fs.open(p));// TODO
+            Reader reader = new InputStreamReader(fs.open(p));
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
         }
         catch (IOException ex) {
             log.warn("IOException :" + XmlUtils.prettyPrint(confHadoop), ex);
-            throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex); // TODO:
+            throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
             log.warn("URISyException :" + ex.getMessage());
-            throw new BundleJobException(ErrorCode.E1302, appPath, ex.getMessage(), ex);// TODO:
+            throw new BundleJobException(ErrorCode.E1302, appPath, ex.getMessage(), ex);
         }
         catch (HadoopAccessorException ex) {
             throw new BundleJobException(ex);
         }
         catch (Exception ex) {
             log.warn("Exception :", ex);
-            throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex);// TODO:
+            throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex);
         }
     }
 
@@ -368,8 +366,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setAppName(XmlUtils.parseXml(this.bundleBean.getOrigJobXml()).getAttributeValue("name"));
             bundleJob.setAppName(bundleJob.getAppName());
             bundleJob.setAppPath(conf.get(OozieClient.BUNDLE_APP_PATH));
-            bundleJob.setStatus(BundleJob.Status.PREP);
-            bundleJob.setCreatedTime(new Date()); // TODO: Do we need that?
+            //bundleJob.setStatus(BundleJob.Status.PREP); //This should be set in parent class.
+            bundleJob.setCreatedTime(new Date());
             bundleJob.setUser(conf.get(OozieClient.USER_NAME));
             bundleJob.setGroup(conf.get(OozieClient.GROUP_NAME));
             bundleJob.setConf(XmlUtils.prettyPrint(conf).toString());
@@ -393,5 +391,13 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     @Override
     public Job getJob() {
         return bundleBean;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#setJob(org.apache.oozie.client.Job)
+     */
+    @Override
+    public void setJob(Job job) {
+        this.bundleBean = (BundleJobBean) job;
     }
 }

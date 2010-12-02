@@ -47,7 +47,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 public class BundleStartXCommand extends StartTransitionXCommand {
-    private String jobId;
+    private final String jobId;
     private BundleJobBean bundleJob;
     private JPAService jpaService = null;
 
@@ -181,9 +181,13 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     private void updateBundleAction(String coordName, String coordId) throws CommandException {
         BundleActionBean action = jpaService.execute(new BundleActionGetCommand(jobId, coordName));
         action.setCoordId(coordId);
-        action.setStatus(Job.Status.RUNNING);
-        //TODO why action needs pending?
-        action.setPending();
+        action.setStatus(getChildStatus());
+        if(isChildPending()){
+            action.setPending();
+        }else{
+            action.resetPending();
+        }
+
         jpaService.execute(new BundleActionUpdateCommand(action));
     }
 
@@ -208,7 +212,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         // Step 2: Merge local properties into runConf
         // extract 'property' tags under 'configuration' block in the coordElem
         // convert Element to XConfiguration
-        Element localConfigElement = (Element) coordElem.getChild("configuration", coordElem.getNamespace());
+        Element localConfigElement = coordElem.getChild("configuration", coordElem.getNamespace());
 
         if (localConfigElement != null) {
             String strConfig = XmlUtils.prettyPrint(localConfigElement).toString();
@@ -237,4 +241,8 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         return bundleJob;
     }
 
+    @Override
+    public void setJob(Job job) {
+        this.bundleJob = (BundleJobBean) job;
+    }
 }

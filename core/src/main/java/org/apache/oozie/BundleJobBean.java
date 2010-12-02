@@ -37,9 +37,9 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.authToken = :authToken, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.status = :status, w.timeUnitStr = :timeUnit where w.id = :id"),
+    @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.authToken = :authToken, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.status = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
 
-    @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp where w.id = :id"),
+    @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.pending = :pending where w.id = :id"),
 
     @NamedQuery(name = "DELETE_BUNDLE_JOB", query = "delete from BundleJobBean w where w.id = :id"),
 
@@ -54,7 +54,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING')  order by w.lastModifiedTimestamp"),
 
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp") })
-public class BundleJobBean extends JsonBundleJob implements Writable {
+    public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic
     @Index
@@ -199,6 +199,13 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      */
     public String getTimeUnitStr() {
         return timeUnitStr;
+    }
+
+    /**
+     * @return the pending
+     */
+    public int getPending() {
+        return pending;
     }
 
     /**

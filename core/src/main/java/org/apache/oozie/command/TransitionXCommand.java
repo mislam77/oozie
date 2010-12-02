@@ -32,4 +32,6 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
 
     public abstract Job getJob();
 
+    public abstract void setJob(Job job);
+
 }

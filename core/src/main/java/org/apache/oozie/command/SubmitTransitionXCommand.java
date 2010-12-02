@@ -57,6 +57,7 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
     @Override
     public void transitToNext() {
         job.setStatus(Job.Status.PREP);
+        job.resetPending();
     }
 
     /* (non-Javadoc)
@@ -65,9 +66,9 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
     @Override
     protected String execute() throws CommandException {
         loadState();
-        this.jobId = submit();
         this.job = getJob();
         transitToNext();
+        this.jobId = submit();
         notifyParent();
         return this.jobId;
     }
