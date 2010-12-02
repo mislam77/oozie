@@ -40,6 +40,7 @@
             <xs:element name="configuration" type="bundle:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="name" type="bundle:IDENTIFIER" use="required"/>
+        <xs:attribute name="critical" type="xs:string" use="optional"/>
     </xs:complexType>
     <xs:complexType name="CONFIGURATION">
         <xs:sequence>

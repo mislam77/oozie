@@ -54,7 +54,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING')  order by w.lastModifiedTimestamp"),
 
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp") })
-    public class BundleJobBean extends JsonBundleJob implements Writable {
+public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic
     @Index
@@ -223,6 +223,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
      *
      * @param pending set pending to false
      */
+    @Override
     public void resetPending() {
         this.pending = 0;
     }
@@ -232,6 +233,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
      *
      * @return if the action is pending.
      */
+    @Override
     public boolean isPending() {
         return pending == 1 ? true : false;
     }

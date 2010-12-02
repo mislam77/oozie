@@ -91,7 +91,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Constructor to create the Bundle Submit Command.
-     * 
+     *
      * @param conf : Configuration for bundle job
      * @param authToken : To be used for authentication
      */
@@ -103,7 +103,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Constructor to create the bundle submit command.
-     * 
+     *
      * @param dryrun
      * @param conf
      * @param authToken
@@ -120,7 +120,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      */
     @Override
     public String submit() throws CommandException {
-        log.info("STARTED Coordinator Submit");
+        log.info("STARTED Bundle Submit");
         try {
             incrJobCounter(1);
 
@@ -160,6 +160,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E1004, "Validation ERROR :", ex.getMessage(), ex);
         }
+        log.info("ENDED Bundle Submit");
         return this.jobId;
     }
 
@@ -221,7 +222,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             super.eagerVerifyPrecondition();
             mergeDefaultConfig();
             String appXml = readAndValidateXml();
-            this.bundleBean.setOrigJobXml(appXml);
+            bundleBean.setOrigJobXml(appXml);
             log.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
         }
         catch (BundleJobException ex) {
@@ -240,11 +241,12 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Merge default configuration with user-defined configuration.
-     * 
+     *
      * @throws CommandException
      */
     protected void mergeDefaultConfig() throws CommandException {
-        Path configDefault = new Path(conf.get(OozieClient.BUNDLE_APP_PATH), CONFIG_DEFAULT);
+        Path appPath = new Path (conf.get(OozieClient.BUNDLE_APP_PATH));
+        Path configDefault = new Path(appPath.getParent(), CONFIG_DEFAULT);
         CoordUtils.getHadoopConf(conf);
         FileSystem fs;
         try {
@@ -274,7 +276,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Read the application XML and validate against bundle Schema
-     * 
+     *
      * @return validated bundle XML
      * @throws BundleJobException
      */
@@ -287,7 +289,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Read bundle definition.
-     * 
+     *
      * @param appPath application path.
      * @param user user name.
      * @param group group name.
@@ -330,7 +332,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Validate against Bundle XSD file
-     * 
+     *
      * @param xmlContent : Input Bundle xml
      * @throws BundleJobException
      */
@@ -353,7 +355,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Write a Bundle Job into database
-     * 
+     *
      * @param : Bundle job bean
      * @return Job if.
      * @throws CommandException
@@ -363,7 +365,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE);
             bundleJob.setId(jobId);
             bundleJob.setAuthToken(this.authToken);
-            bundleJob.setAppName(XmlUtils.parseXml(this.bundleBean.getOrigJobXml()).getAttributeValue("name"));
+            bundleJob.setAppName(XmlUtils.parseXml(bundleBean.getOrigJobXml()).getAttributeValue("name"));
             bundleJob.setAppName(bundleJob.getAppName());
             bundleJob.setAppPath(conf.get(OozieClient.BUNDLE_APP_PATH));
             //bundleJob.setStatus(BundleJob.Status.PREP); //This should be set in parent class.
@@ -371,7 +373,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setUser(conf.get(OozieClient.USER_NAME));
             bundleJob.setGroup(conf.get(OozieClient.GROUP_NAME));
             bundleJob.setConf(XmlUtils.prettyPrint(conf).toString());
-            bundleJob.setJobXml(XmlUtils.prettyPrint(conf).toString());
+            //TODO this xml should be resolved
+            bundleJob.setJobXml(bundleBean.getOrigJobXml());
             bundleJob.setLastModifiedTime(new Date());
 
             if (!dryrun) {

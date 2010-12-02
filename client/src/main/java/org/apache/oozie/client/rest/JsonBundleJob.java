@@ -91,6 +91,10 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     @Transient
     private String consoleUrl;
 
+    @Basic
+    @Column(name = "pending")
+    private int pending = 0;
+
     @Transient
     private List<? extends JsonCoordinatorJob> coordJobs;
 
@@ -455,11 +459,27 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         return startTime;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.Job#setPending()
+    /**
+     * @param pending set pending to true
      */
-    @Override
     public void setPending() {
+        this.pending = 1;
+    }
+
+    /**
+     * @param pending set pending to false
+     */
+    public void resetPending() {
+        this.pending = 0;
+    }
+
+    /**
+     * Return if the action is pending.
+     *
+     * @return if the action is pending.
+     */
+    public boolean isPending() {
+        return pending == 1 ? true : false;
     }
 
 }

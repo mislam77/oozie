@@ -252,13 +252,13 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @throws CommandException
      */
     protected void mergeDefaultConfig() throws CommandException {
-        Path configDefault = new Path(conf.get(OozieClient.COORDINATOR_APP_PATH), CONFIG_DEFAULT);
-        Configuration fsConfig = CoordUtils.getHadoopConf(conf);
-        FileSystem fs;
+        Path appPath = new Path (conf.get(OozieClient.COORDINATOR_APP_PATH));
+        Path configDefault = new Path(appPath.getParent(), CONFIG_DEFAULT);
+        //Configuration fsConfig = CoordUtils.getHadoopConf(conf);
         try {
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-            fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, configDefault.toUri(),
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, configDefault.toUri(),
                     new Configuration());
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));

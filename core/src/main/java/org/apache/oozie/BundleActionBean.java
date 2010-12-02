@@ -22,11 +22,14 @@ import java.util.Date;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.Job.Status;
@@ -35,11 +38,12 @@ import org.apache.oozie.util.WritableUtils;
 
 @Entity
 @IdClass(BundleActionId.class)
+@Table(name = "BUNDLE_ACTIONS")
+@DiscriminatorColumn(name = "bean_type", discriminatorType = DiscriminatorType.STRING)
 @NamedQueries( {
-
         @NamedQuery(name = "DELETE_BUNDLE_ACTION", query = "delete from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS", query = "select OBJECT(w) from BundleActionBean w"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId"),
 
         @NamedQuery(name = "GET_BUNDLE_ACTION", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
 

@@ -16,7 +16,7 @@
           <controls>
               <kick-off-time>2009-02-02T00:00Z</kick-off-time>
           </controls>
-          <coordinator>
+          <coordinator name='coord'>
                  <app-path>hdfs:///tmp/coordinator/coordinator.xml</app-path>
                  <configuration>
                      <property>

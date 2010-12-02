@@ -27,6 +27,7 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
     private boolean childPending;
 
     public abstract void StartChildren() throws CommandException;
+    public abstract void updateJob() throws CommandException;
 
     public StartTransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
@@ -49,6 +50,7 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
         loadState();
         job = this.getJob();
         transitToNext();
+        updateJob();
         StartChildren();
         notifyParent();
         return null;

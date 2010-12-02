@@ -16,15 +16,16 @@ package org.apache.oozie.command.bundle;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
-import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.CoordinatorXEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
@@ -36,6 +37,7 @@ import org.apache.oozie.command.jpa.BundleActionGetCommand;
 import org.apache.oozie.command.jpa.BundleActionInsertCommand;
 import org.apache.oozie.command.jpa.BundleActionUpdateCommand;
 import org.apache.oozie.command.jpa.BundleJobGetCommand;
+import org.apache.oozie.command.jpa.BundleJobUpdateCommand;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -108,16 +110,22 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     @SuppressWarnings("unchecked")
     private void insertBundleActions() throws CommandException {
         if (bundleJob != null) {
-            Set<String> set = new HashSet<String>();
+            Map<String, Boolean> map = new HashMap<String, Boolean>();
             try {
                 Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
                 List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
                 for (Element elem : coordElems) {
                     Attribute name = elem.getAttribute("name");
+                    Attribute critical = elem.getAttribute("critical");
                     if (name != null) {
-                        if (set.contains(name.getValue())) {
+                        if (map.containsKey(name.getValue())) {
                             throw new CommandException(ErrorCode.E1304, name);
                         }
+                        boolean isCritical = false;
+                        if (Boolean.parseBoolean(critical.getValue())) {
+                            isCritical = true;
+                        }
+                        map.put(name.getValue(), isCritical);
                     }
                     else {
                         throw new CommandException(ErrorCode.E1305);
@@ -128,8 +136,8 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                 throw new CommandException(ErrorCode.E1301, jex);
             }
 
-            for (String coordName : set) {
-                BundleActionBean action = createBundleAction(jobId, coordName);
+            for (Entry<String, Boolean> coordName : map.entrySet()) {
+                BundleActionBean action = createBundleAction(jobId, coordName.getKey(), coordName.getValue());
                 jpaService.execute(new BundleActionInsertCommand(action));
             }
 
@@ -139,10 +147,15 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         }
     }
 
-    private BundleActionBean createBundleAction(String jobId, String coordName) {
+    private BundleActionBean createBundleAction(String jobId, String coordName, boolean isCritical) {
         BundleActionBean action = new BundleActionBean();
         action.setBundleId(jobId);
         action.setCoordName(coordName);
+        if (isCritical) {
+            action.setCritical();
+        } else {
+            action.resetCritical();
+        }
         return action;
     }
 
@@ -155,8 +168,11 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                 for (Element coordElem : coordElems) {
                     Attribute name = coordElem.getAttribute("name");
                     Configuration coordConf = mergeConfig(coordElem);
-                    CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
+                    coordConf.set(OozieClient.BUNDLE_ID, jobId);
+                    //TODO change to queue CoordSubmitCmd
+                    CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorXEngine(
                             bundleJob.getUser(), bundleJob.getAuthToken());
+
                     String coordId;
                     if (dryrun) {
                         coordId = coordEngine.dryrunSubmit(coordConf, true);
@@ -244,5 +260,10 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     @Override
     public void setJob(Job job) {
         this.bundleJob = (BundleJobBean) job;
+    }
+
+    @Override
+    public void updateJob() throws CommandException {
+        jpaService.execute(new BundleJobUpdateCommand(bundleJob));
     }
 }

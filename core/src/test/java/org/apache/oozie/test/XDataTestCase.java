@@ -15,10 +15,12 @@
 package org.apache.oozie.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Date;
 import java.util.Properties;
@@ -27,6 +29,7 @@ import java.util.regex.Matcher;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.SLAEventBean;
@@ -35,6 +38,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.SLAEvent;
 import org.apache.oozie.client.WorkflowAction;
@@ -42,6 +46,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.jpa.BundleJobInsertCommand;
 import org.apache.oozie.command.jpa.CoordActionInsertCommand;
 import org.apache.oozie.command.jpa.CoordJobInsertCommand;
 import org.apache.oozie.command.jpa.SLAEventInsertCommand;
@@ -56,6 +61,7 @@ import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowApp;
@@ -110,15 +116,7 @@ public abstract class XDataTestCase extends XFsTestCase {
     protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status)
             throws IOException {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
-        String appXml = getCoordJobXml(appPath);
-
-        FileSystem fs = getFileSystem();
-
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
-        byte[] bytes = appXml.getBytes("UTF-8");
-        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        Reader reader2 = new InputStreamReader(bais);
-        IOUtils.copyCharStream(reader2, writer);
+        String appXml = writeCoordXml(appPath);
 
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
@@ -149,6 +147,37 @@ public abstract class XDataTestCase extends XFsTestCase {
             fail("Could not set Date/time");
         }
         return coordJob;
+    }
+
+    /**
+     * @param appPath
+     * @throws IOException
+     * @throws UnsupportedEncodingException
+     */
+    protected String writeCoordXml(Path appPath) throws IOException, UnsupportedEncodingException {
+        String appXml = getCoordJobXml(appPath);
+
+        FileSystem fs = getFileSystem();
+
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
+        byte[] bytes = appXml.getBytes("UTF-8");
+        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+        Reader reader2 = new InputStreamReader(bais);
+        IOUtils.copyCharStream(reader2, writer);
+        return appXml;
+    }
+
+
+    /**
+     * @param appPath
+     * @return testFileName
+     * @throws IOException
+     * @throws UnsupportedEncodingException
+     */
+    protected String writeCoordXml(Path appPath, String testFileName) throws IOException, UnsupportedEncodingException {
+        String appXml = getCoordJobXml(testFileName);
+        writeToFile(appXml, appPath, "coordinator.xml");
+        return appXml;
     }
 
     /**
@@ -324,6 +353,29 @@ public abstract class XDataTestCase extends XFsTestCase {
     }
 
     /**
+     * Insert bundle job for testing.
+     *
+     * @param jobStatus
+     * @return bundle job bean
+     * @throws Exception
+     */
+    protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus) throws Exception {
+        BundleJobBean bundle = createBundleJob(jobStatus);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            BundleJobInsertCommand bundleInsertCmd = new BundleJobInsertCommand(bundle);
+            jpaService.execute(bundleInsertCmd);
+        }
+        catch (CommandException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test bundle job record to table");
+            throw ce;
+        }
+        return bundle;
+    }
+
+    /**
      * Read coord job xml from test resources
      *
      * @param appPath
@@ -343,6 +395,23 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
         catch (IOException ioe) {
             throw new RuntimeException(XLog.format("Could not get coord-rerun-job.xml", ioe));
+        }
+    }
+
+    /**
+     * Read coord job xml from test resources
+     * @param testFileName
+     *
+     * @return coord job xml
+     */
+    protected String getCoordJobXml(String testFileName) {
+        try {
+            Reader reader = IOUtils.getResourceAsReader(testFileName, -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get [{0}]", testFileName, ioe));
         }
     }
 
@@ -498,6 +567,70 @@ public abstract class XDataTestCase extends XFsTestCase {
         action.setConf(actionXml);
 
         return action;
+    }
+
+    /**
+     * Create bundle job bean
+     *
+     * @param jobStatus
+     * @return bundle job bean
+     * @throws Exception
+     */
+    protected BundleJobBean createBundleJob(Job.Status jobStatus) throws Exception {
+        Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
+        Path coordPath2 = new Path(getFsTestCaseDir(), "coord2");
+        writeCoordXml(coordPath1, "coord-job-bundle.xml");
+        writeCoordXml(coordPath2, "coord-job-bundle.xml");
+
+        Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
+        String bundleAppXml = getBundleXml("bundle-submit-job.xml");
+
+        bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
+        bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
+        //bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString());
+        //bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString());
+
+        writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
+
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        conf.set("jobTracker", getJobTrackerUri());
+        conf.set("nameNode", getNameNodeUri());
+        injectKerberosInfo(conf);
+
+        BundleJobBean bundle = new BundleJobBean();
+        bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
+        bundle.setAppName("BUNDLE-TEST");
+        bundle.setAppPath(bundleAppPath.toString());
+        bundle.setAuthToken("authToken");
+        bundle.setConf(XmlUtils.prettyPrint(conf).toString());
+        bundle.setConsoleUrl("consoleUrl");
+        bundle.setCreatedTime(new Date());
+        //TODO bundle.setStartTime(startTime);
+        //TODO bundle.setEndTime(endTime);
+        //TODO bundle.setExternalId(externalId);
+        bundle.setJobXml(bundleAppXml);
+        bundle.setLastModifiedTime(new Date());
+        bundle.setOrigJobXml(bundleAppXml);
+        bundle.resetPending();
+        bundle.setStatus(jobStatus);
+        bundle.setUser(conf.get(OozieClient.USER_NAME));
+        bundle.setGroup(conf.get(OozieClient.GROUP_NAME));
+
+        return bundle;
+    }
+
+    private String getBundleXml(String resourceXmlName) {
+        try {
+            Reader reader = IOUtils.getResourceAsReader(resourceXmlName, -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get " + resourceXmlName, ioe));
+        }
     }
 
 }

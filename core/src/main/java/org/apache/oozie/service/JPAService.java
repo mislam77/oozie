@@ -15,6 +15,9 @@
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleActionId;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -22,6 +25,7 @@ import org.apache.oozie.FaultInjection;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.rest.JsonBundleJob;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.JsonSLAEvent;
@@ -131,6 +135,10 @@ public class JPAService implements Service, Instrumentable {
         }
         props.setProperty("openjpa.ConnectionProperties", connProps);
 
+        BundleActionId bundleActionid = new BundleActionId();
+        bundleActionid.setBundleId("1");
+        bundleActionid.setCoordName("coordName");
+
         factory = Persistence.createEntityManagerFactory(persistentUnit, props);
 
         EntityManager entityManager = factory.createEntityManager();
@@ -144,6 +152,9 @@ public class JPAService implements Service, Instrumentable {
         entityManager.find(JsonCoordinatorJob.class, 1);
         entityManager.find(SLAEventBean.class, 1);
         entityManager.find(JsonSLAEvent.class, 1);
+        entityManager.find(BundleJobBean.class, 1);
+        entityManager.find(JsonBundleJob.class, 1);
+        entityManager.find(BundleActionBean.class, bundleActionid);
         entityManager.find(ValidateConnectionBean.class, 1);
 
         LOG.info(XLog.STD, "All entities initialized");

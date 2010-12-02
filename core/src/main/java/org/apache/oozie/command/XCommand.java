@@ -287,7 +287,7 @@ public abstract class XCommand<T> implements XCallable<T> {
             return null;
         }
         catch (XException ex) {
-            LOG.error("XException, {0}", ex);
+            LOG.error("XException, ", ex);
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".xexceptions", 1);
             if (ex instanceof CommandException) {
                 throw (CommandException) ex;
@@ -297,7 +297,7 @@ public abstract class XCommand<T> implements XCallable<T> {
             }
         }
         catch (Exception ex) {
-            LOG.error("Exception, {0}", ex);
+            LOG.error("Exception, ", ex);
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".exceptions", 1);
             throw new CommandException(ErrorCode.E0607, ex);
         }
