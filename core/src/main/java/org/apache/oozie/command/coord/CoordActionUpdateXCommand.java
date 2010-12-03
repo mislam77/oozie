@@ -102,7 +102,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
-    protected void loadState() throws CommandException {
+    protected void eagerLoadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
         if (jpaService == null) {
             throw new CommandException(ErrorCode.E0610);
@@ -125,5 +125,10 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             jpaService.execute(new org.apache.oozie.command.jpa.CoordActionUpdateCommand(coordAction));
             throw new PreconditionException(ErrorCode.E1100);
         }
+    }
+
+    @Override
+    protected void loadState() throws CommandException {
+
     }
 }
