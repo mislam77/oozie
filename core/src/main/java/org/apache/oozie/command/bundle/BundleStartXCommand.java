@@ -151,9 +151,11 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         BundleActionBean action = new BundleActionBean();
         action.setBundleId(jobId);
         action.setCoordName(coordName);
+        action.setStatus(Job.Status.PREP);
         if (isCritical) {
             action.setCritical();
-        } else {
+        }
+        else {
             action.resetCritical();
         }
         return action;
@@ -169,9 +171,9 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                     Attribute name = coordElem.getAttribute("name");
                     Configuration coordConf = mergeConfig(coordElem);
                     coordConf.set(OozieClient.BUNDLE_ID, jobId);
-                    //TODO change to queue CoordSubmitCmd
-                    CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorXEngine(
-                            bundleJob.getUser(), bundleJob.getAuthToken());
+                    // TODO change to queue CoordSubmitCmd
+                    CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class)
+                    .getCoordinatorXEngine(bundleJob.getUser(), bundleJob.getAuthToken());
 
                     String coordId;
                     if (dryrun) {
@@ -189,7 +191,8 @@ public class BundleStartXCommand extends StartTransitionXCommand {
             catch (CoordinatorEngineException ce) {
                 throw new CommandException(ErrorCode.E1019, ce);
             }
-        } else {
+        }
+        else {
             throw new CommandException(ErrorCode.E0604, jobId);
         }
     }
@@ -197,19 +200,13 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     private void updateBundleAction(String coordName, String coordId) throws CommandException {
         BundleActionBean action = jpaService.execute(new BundleActionGetCommand(jobId, coordName));
         action.setCoordId(coordId);
-        action.setStatus(getChildStatus());
-        if(isChildPending()){
-            action.setPending();
-        }else{
-            action.resetPending();
-        }
-
+        action.setPending(action.getPending() + 1);
         jpaService.execute(new BundleActionUpdateCommand(action));
     }
 
     /**
      * Merge Bundle job config and the configuration from the coord job to pass to Coord Engine
-     *
+     * 
      * @param coordElem
      * @return Configuration
      * @throws CommandException

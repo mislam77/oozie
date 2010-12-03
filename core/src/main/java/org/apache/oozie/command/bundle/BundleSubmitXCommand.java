@@ -50,6 +50,7 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.UUIDService.ApplicationType;
+import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
@@ -91,7 +92,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Constructor to create the Bundle Submit Command.
-     *
+     * 
      * @param conf : Configuration for bundle job
      * @param authToken : To be used for authentication
      */
@@ -103,7 +104,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Constructor to create the bundle submit command.
-     *
+     * 
      * @param dryrun
      * @param conf
      * @param authToken
@@ -245,7 +246,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @throws CommandException
      */
     protected void mergeDefaultConfig() throws CommandException {
-        Path appPath = new Path (conf.get(OozieClient.BUNDLE_APP_PATH));
+        Path appPath = new Path(conf.get(OozieClient.BUNDLE_APP_PATH));
         Path configDefault = new Path(appPath.getParent(), CONFIG_DEFAULT);
         CoordUtils.getHadoopConf(conf);
         FileSystem fs;
@@ -332,7 +333,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Validate against Bundle XSD file
-     *
+     * 
      * @param xmlContent : Input Bundle xml
      * @throws BundleJobException
      */
@@ -355,7 +356,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Write a Bundle Job into database
-     *
+     * 
      * @param : Bundle job bean
      * @return Job if.
      * @throws CommandException
@@ -368,13 +369,12 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setAppName(XmlUtils.parseXml(bundleBean.getOrigJobXml()).getAttributeValue("name"));
             bundleJob.setAppName(bundleJob.getAppName());
             bundleJob.setAppPath(conf.get(OozieClient.BUNDLE_APP_PATH));
-            //bundleJob.setStatus(BundleJob.Status.PREP); //This should be set in parent class.
+            // bundleJob.setStatus(BundleJob.Status.PREP); //This should be set in parent class.
             bundleJob.setCreatedTime(new Date());
             bundleJob.setUser(conf.get(OozieClient.USER_NAME));
             bundleJob.setGroup(conf.get(OozieClient.GROUP_NAME));
             bundleJob.setConf(XmlUtils.prettyPrint(conf).toString());
-            //TODO this xml should be resolved
-            bundleJob.setJobXml(bundleBean.getOrigJobXml());
+            bundleJob.setJobXml(resolvedVars(bundleBean.getOrigJobXml(), conf));
             bundleJob.setLastModifiedTime(new Date());
 
             if (!dryrun) {
@@ -402,5 +402,42 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     @Override
     public void setJob(Job job) {
         this.bundleBean = (BundleJobBean) job;
+    }
+
+    /**
+     * @param bundleXml
+     * @param conf
+     * @return
+     * @throws BundleJobException
+     */
+    private String resolvedVars(String bundleXml, Configuration conf) throws BundleJobException {
+        try {
+            ELEvaluator eval = createEvaluator(conf);
+            return eval.evaluate(bundleXml, String.class);
+        }
+        catch (Exception e) {
+            throw new BundleJobException(ErrorCode.E1004, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @param conf
+     * @return
+     * @throws BundleJobException
+     */
+    public ELEvaluator createEvaluator(Configuration conf) throws BundleJobException {
+        ELEvaluator eval;
+        ELEvaluator.Context context;
+        try {
+            context = new ELEvaluator.Context();
+            eval = new ELEvaluator(context);
+            for (Map.Entry<String, String> entry : conf) {
+                eval.setVariable(entry.getKey(), entry.getValue());
+            }
+        }
+        catch (Exception e) {
+            throw new BundleJobException(ErrorCode.E1004, e.getMessage(), e);
+        }
+        return eval;
     }
 }

@@ -179,6 +179,8 @@ public enum ErrorCode {
     E1305(XLog.STD, "Empty bundle application coordinator name."),
     E1306(XLog.STD, "Could not read the bundle job configuration, [{0}]"),
     E1307(XLog.STD, "Could not read the bundle coord job configuration, [{0}]"),
+    E1308(XLog.STD, "Bundle Action Status  [{0}] is not matching with coordinator previous status [{1}]."),
+    E1309(XLog.STD, "Bundle Action for bundle ID  [{0}] and Coordinator [{1}] could not be update by BundleStatusUpdateXCommand"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

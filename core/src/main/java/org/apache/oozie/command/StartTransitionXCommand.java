@@ -23,9 +23,6 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
 
     private Job job;
 
-    private Job.Status childStatus;
-    private boolean childPending;
-
     public abstract void StartChildren() throws CommandException;
     public abstract void updateJob() throws CommandException;
 
@@ -41,8 +38,6 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
     public void transitToNext() {
         job.setStatus(Job.Status.RUNNING);
         job.setPending();
-        childStatus = Job.Status.PREP;
-        childPending = true;
     }
 
     @Override
@@ -54,33 +49,5 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
         StartChildren();
         notifyParent();
         return null;
-    }
-
-    /**
-     * @return the childStatus
-     */
-    public Job.Status getChildStatus() {
-        return childStatus;
-    }
-
-    /**
-     * @param childStatus the childStatus to set
-     */
-    public void setChildStatus(Job.Status childStatus) {
-        this.childStatus = childStatus;
-    }
-
-    /**
-     * @return the childPending
-     */
-    public boolean isChildPending() {
-        return childPending;
-    }
-
-    /**
-     * @param childPending the childPending to set
-     */
-    public void setChildPending(boolean childPending) {
-        this.childPending = childPending;
     }
 }

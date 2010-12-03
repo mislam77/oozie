@@ -26,7 +26,6 @@ import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -37,20 +36,23 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 
 @Entity
-@IdClass(BundleActionId.class)
 @Table(name = "BUNDLE_ACTIONS")
 @DiscriminatorColumn(name = "bean_type", discriminatorType = DiscriminatorType.STRING)
 @NamedQueries( {
-        @NamedQuery(name = "DELETE_BUNDLE_ACTION", query = "delete from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
+    @NamedQuery(name = "DELETE_BUNDLE_ACTION", query = "delete from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId"),
+    @NamedQuery(name = "GET_BUNDLE_ACTIONS", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTION", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
+    @NamedQuery(name = "GET_BUNDLE_ACTION", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_COUNT", query = "select count(w) from BundleActionBean w"),
+    @NamedQuery(name = "GET_BUNDLE_ACTIONS_COUNT", query = "select count(w) from BundleActionBean w"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_OLDER_THAN", query = "select OBJECT(w) from BundleActionBean w order by w.lastModifiedTimestamp") })
-public class BundleActionBean implements Writable {
+    @NamedQuery(name = "GET_BUNDLE_ACTIONS_OLDER_THAN", query = "select OBJECT(w) from BundleActionBean w order by w.lastModifiedTimestamp") })
+    public class BundleActionBean implements Writable {
+
+    @Id
+    @Column(name = "bundleaction_id")
+    private String bundleActionId = null;
 
     @Id
     @Column(name = "bundle_id")
@@ -79,6 +81,20 @@ public class BundleActionBean implements Writable {
     @Basic
     @Column(name = "last_modified_time")
     private java.sql.Timestamp lastModifiedTimestamp = null;
+
+    /**
+     * @param bundleActionId the bundleActionId to set
+     */
+    public void setBundleActionId(String bundleActionId) {
+        this.bundleActionId = bundleActionId;
+    }
+
+    /**
+     * @return the bundleActionId
+     */
+    public String getBundleActionId() {
+        return bundleActionId;
+    }
 
     /**
      * @return bundleId
@@ -169,15 +185,15 @@ public class BundleActionBean implements Writable {
     /**
      * @param pending set pending to true
      */
-    public void setPending() {
-        this.pending = 1;
+    public void setPending(int pending) {
+        this.pending = pending;
     }
 
     /**
      * @param pending set pending to false
      */
-    public void resetPending() {
-        this.pending = 0;
+    public int getPending() {
+        return this.pending;
     }
 
     /**
@@ -186,7 +202,7 @@ public class BundleActionBean implements Writable {
      * @return if the action is pending.
      */
     public boolean isPending() {
-        return pending == 1 ? true : false;
+        return pending > 1 ? true : false;
     }
 
     /**
@@ -222,6 +238,7 @@ public class BundleActionBean implements Writable {
      */
     @Override
     public void write(DataOutput dataOutput) throws IOException {
+        WritableUtils.writeStr(dataOutput, getBundleActionId());
         WritableUtils.writeStr(dataOutput, getBundleId());
         WritableUtils.writeStr(dataOutput, getCoordName());
         WritableUtils.writeStr(dataOutput, getCoordId());
@@ -236,6 +253,7 @@ public class BundleActionBean implements Writable {
      */
     @Override
     public void readFields(DataInput dataInput) throws IOException {
+        setBundleActionId(WritableUtils.readStr(dataInput));
         setBundleId(WritableUtils.readStr(dataInput));
         setCoordName(WritableUtils.readStr(dataInput));
         setCoordId(WritableUtils.readStr(dataInput));
@@ -247,5 +265,4 @@ public class BundleActionBean implements Writable {
             setLastModifiedTime(new Date(d));
         }
     }
-
 }
