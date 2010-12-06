@@ -34,6 +34,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
+import org.apache.openjpa.persistence.jdbc.Index;
 
 @Entity
 @Table(name = "BUNDLE_ACTIONS")
@@ -51,14 +52,13 @@ import org.apache.oozie.util.WritableUtils;
     public class BundleActionBean implements Writable {
 
     @Id
+    @Index
     @Column(name = "bundleaction_id")
     private String bundleActionId = null;
 
-    @Id
     @Column(name = "bundle_id")
     private String bundleId = null;
 
-    @Id
     @Column(name = "coord_name")
     private String coordName = null;
 

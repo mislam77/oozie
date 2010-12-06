@@ -41,6 +41,7 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.jpa.CoordJobInsertCommand;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
@@ -49,12 +50,12 @@ import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.UUIDService.ApplicationType;
@@ -85,8 +86,8 @@ import org.xml.sax.SAXException;
  */
 public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
 
-    private Configuration conf;
-    private String authToken;
+    private final Configuration conf;
+    private final String authToken;
     private boolean dryrun;
     private JPAService jpaService = null;
 
@@ -101,7 +102,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     public static final String CONF_DEFAULT_TIMEOUT_NORMAL = Service.CONF_PREFIX + "coord.normal.default.timeout";
 
-    private XLog log = XLog.getLog(getClass());
+    private final XLog log = XLog.getLog(getClass());
     private ELEvaluator evalFreq = null;
     private ELEvaluator evalNofuncs = null;
     private ELEvaluator evalData = null;
@@ -145,6 +146,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         log.info("STARTED Coordinator Submit");
         incrJobCounter(1);
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
+        CoordinatorJob.Status prevStatus = CoordinatorJob.Status.PREP;
+        boolean exceptionOccured = false;
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
             mergeDefaultConfig();
@@ -160,6 +163,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             jobId = storeToDB(eJob, coordJob);
             // log JOB info for coordinator jobs
             setLogInfo(coordJob);
+            prevStatus = CoordinatorJob.Status.PREP;
 
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour
@@ -190,21 +194,31 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 }
                 String action = coordActionMatCom.materializeJobs(true, coordJob, jobConf, null);
                 String output = coordJob.getJobXml() + System.getProperty("line.separator")
-                        + "***actions for instance***" + action;
+                + "***actions for instance***" + action;
                 return output;
             }
         }
         catch (CoordinatorJobException ex) {
+            exceptionOccured = true;
             log.warn("ERROR:  ", ex);
             throw new CommandException(ex);
         }
         catch (IllegalArgumentException iex) {
+            exceptionOccured = true;
             log.warn("ERROR:  ", iex);
             throw new CommandException(ErrorCode.E1003, iex);
         }
         catch (Exception ex) {
+            exceptionOccured = true;
             log.warn("ERROR:  ", ex);
             throw new CommandException(ErrorCode.E0803, ex);
+        }
+        finally{
+            if(exceptionOccured){
+                coordJob.setStatus(CoordinatorJob.Status.FAILED);
+            }
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
         }
         log.info("ENDED Coordinator Submit jobId=" + jobId);
         return jobId;
@@ -291,7 +305,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @throws Exception
      */
     public Element basicResolveAndIncludeDS(String appXml, Configuration conf, CoordinatorJobBean coordJob)
-            throws CoordinatorJobException, Exception {
+    throws CoordinatorJobException, Exception {
         Element basicResolvedApp = resolveInitial(conf, appXml, coordJob);
         includeDataSets(basicResolvedApp, conf);
         return basicResolvedApp;
@@ -363,7 +377,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     @SuppressWarnings("unchecked")
     protected Element resolveInitial(Configuration conf, String appXml, CoordinatorJobBean coordJob)
-            throws CoordinatorJobException, Exception {
+    throws CoordinatorJobException, Exception {
         Element eAppXml = XmlUtils.parseXml(appXml);
         // job's main attributes
         // frequency
@@ -645,7 +659,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 includeOneDSFile(incDSFile, dsList, allDataSets, datasets.getNamespace());
             }
             for (Element e : (List<Element>) datasets.getChildren("dataset", datasets.getNamespace())) {
-                String dsName = (String) e.getAttributeValue("name");
+                String dsName = e.getAttributeValue("name");
                 if (dsList.contains(dsName)) {// Override with this DS
                     // Remove old DS
                     removeDataSet(allDataSets, dsName);
@@ -673,7 +687,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     @SuppressWarnings("unchecked")
     private void includeOneDSFile(String incDSFile, List<String> dsList, Element allDataSets, Namespace dsNameSpace)
-            throws CoordinatorJobException {
+    throws CoordinatorJobException {
         Element tmpDataSets = null;
         try {
             String dsXml = readDefinition(incDSFile);
@@ -684,9 +698,9 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             log.warn("Error parsing included dataset [{0}].  Message [{1}]", incDSFile, e.getMessage());
             throw new CoordinatorJobException(ErrorCode.E0700, e.getMessage());
         }
-        resolveDataSets((List<Element>) tmpDataSets.getChildren("dataset"));
+        resolveDataSets(tmpDataSets.getChildren("dataset"));
         for (Element e : (List<Element>) tmpDataSets.getChildren("dataset")) {
-            String dsName = (String) e.getAttributeValue("name");
+            String dsName = e.getAttributeValue("name");
             if (dsList.contains(dsName)) {
                 throw new RuntimeException("Duplicate Dataset " + dsName);
             }
