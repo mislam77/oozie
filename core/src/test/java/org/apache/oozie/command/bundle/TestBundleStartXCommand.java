@@ -34,7 +34,6 @@ import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
 
 
-
 public class TestBundleStartXCommand extends XDataTestCase {
 
     private Services services;
@@ -94,8 +93,8 @@ public class TestBundleStartXCommand extends XDataTestCase {
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-//        BundleJobDeleteCommand bundleDeleteCmd = new BundleJobDeleteCommand(job.getId());
-//        jpaService.execute(bundleDeleteCmd);
+        //        BundleJobDeleteCommand bundleDeleteCmd = new BundleJobDeleteCommand(job.getId());
+        //        jpaService.execute(bundleDeleteCmd);
 
         Configuration jobConf = null;
         try {

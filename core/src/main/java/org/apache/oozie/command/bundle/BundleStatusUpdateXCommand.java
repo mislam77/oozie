@@ -102,7 +102,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      */
     @Override
     protected String getEntityKey() {
-        return coordjob.getBundleId();
+        return this.bundleaction.getBundleActionId();
     }
 
     /* (non-Javadoc)
