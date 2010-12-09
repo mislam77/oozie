@@ -39,6 +39,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.rest.JsonBundleJob;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.JsonTags;
@@ -764,6 +765,26 @@ public class OozieClient {
             return null;
         }
     }
+    
+    private class BundleJobInfo extends ClientCallable<BundleJob> {
+
+        BundleJobInfo(String jobId) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_INFO));
+        }
+
+        @Override
+        protected BundleJob call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return new JsonBundleJob(json);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
 
     private class CoordActionInfo extends ClientCallable<CoordinatorAction> {
         CoordActionInfo(String actionId) {
@@ -783,6 +804,17 @@ public class OozieClient {
             }
             return null;
         }
+    }
+    
+    /**
+     * Get the info of a bundle job.
+     *
+     * @param jobId job Id.
+     * @return the job info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public BundleJob getBundleJobInfo(String jobId) throws OozieClientException {
+        return new BundleJobInfo(jobId).call();
     }
 
     /**

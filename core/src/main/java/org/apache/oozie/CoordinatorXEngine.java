@@ -32,8 +32,8 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
-import org.apache.oozie.command.coord.CoordJobCommand;
-import org.apache.oozie.command.coord.CoordJobsCommand;
+import org.apache.oozie.command.coord.CoordJobXCommand;
+import org.apache.oozie.command.coord.CoordJobsXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
 import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
@@ -83,7 +83,7 @@ public class CoordinatorXEngine extends BaseEngine {
      */
     private CoordinatorJobBean getCoordJobWithNoActionInfo(String jobId) throws BaseEngineException {
         try {
-            return new CoordJobCommand(jobId, false).call();
+            return new CoordJobXCommand(jobId).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);
@@ -112,7 +112,7 @@ public class CoordinatorXEngine extends BaseEngine {
     @Override
     public CoordinatorJobBean getCoordJob(String jobId) throws BaseEngineException {
         try {
-            return new CoordJobCommand(jobId).call();
+            return new CoordJobXCommand(jobId).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);
@@ -127,7 +127,7 @@ public class CoordinatorXEngine extends BaseEngine {
     @Override
     public CoordinatorJobBean getCoordJob(String jobId, int start, int length) throws BaseEngineException {
         try {
-            return new CoordJobCommand(jobId, start, length).call();
+            return new CoordJobXCommand(jobId, start, length).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);
@@ -330,7 +330,7 @@ public class CoordinatorXEngine extends BaseEngine {
         Map<String, List<String>> filter = parseFilter(filterStr);
 
         try {
-            return new CoordJobsCommand(filter, start, len).call();
+            return new CoordJobsXCommand(filter, start, len).call();
         }
         catch (CommandException ex) {
             throw new CoordinatorEngineException(ex);

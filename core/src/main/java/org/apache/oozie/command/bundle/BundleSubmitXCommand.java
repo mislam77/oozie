@@ -100,7 +100,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @param authToken : To be used for authentication
      */
     public BundleSubmitXCommand(Configuration conf, String authToken) {
-        super("coord_submit", "coord_submit", 1);
+        super("bundle_submit", "bundle_submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
@@ -367,7 +367,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      */
     private String storeToDB(BundleJobBean bundleJob, String resolvedJobXml) throws CommandException {
         try {
-            String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE);
+            jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE);
+            
             bundleJob.setId(jobId);
             bundleJob.setAuthToken(this.authToken);
             bundleJob.setAppName(XmlUtils.parseXml(bundleBean.getOrigJobXml()).getAttributeValue("name"));

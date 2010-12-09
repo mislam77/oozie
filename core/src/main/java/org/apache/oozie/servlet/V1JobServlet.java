@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngineException;
+import org.apache.oozie.BundleEngine;
+import org.apache.oozie.BundleEngineException;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngineException;
@@ -31,9 +33,11 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.DagXEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonBundleJob;
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -65,6 +69,9 @@ public class V1JobServlet extends BaseJobServlet {
         String jobId = getResourceName(request);
         if (jobId.endsWith("-W")) {
             startWorkflowJob(request, response);
+        }
+        else if (jobId.endsWith("-B")) {
+            startBundleJob(request, response);
         }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303);
@@ -191,20 +198,24 @@ public class V1JobServlet extends BaseJobServlet {
          */
         JsonBean jobBean = null;
         String jobId = getResourceName(request);
-        if (jobId.endsWith("-W")) {
-            jobBean = getWorkflowJob(request, response);
+        if (jobId.endsWith("-B")) {
+            jobBean = getBundleJob(request, response);
         }
         else {
-            if (jobId.contains("-W@")) {
-                jobBean = getWorkflowAction(request, response);
+            if (jobId.endsWith("-W")) {
+                jobBean = getWorkflowJob(request, response);
             }
             else {
-                if (jobId.contains("-C@")) {
-                    jobBean = getCoordinatorAction(request, response);
+                if (jobId.contains("-W@")) {
+                    jobBean = getWorkflowAction(request, response);
                 }
                 else {
-                    // jobBean = new JsonCoordinatorJob(getCoordinatorJob(request, response));
-                    jobBean = getCoordinatorJob(request, response);
+                    if (jobId.contains("-C@")) {
+                        jobBean = getCoordinatorAction(request, response);
+                    }
+                    else {
+                        jobBean = getCoordinatorJob(request, response);
+                    }
                 }
             }
         }
@@ -258,6 +269,23 @@ public class V1JobServlet extends BaseJobServlet {
             dagEngine.start(jobId);
         }
         catch (DagEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+    
+    /**
+     * @param request
+     * @param response
+     * @throws XServletException
+     */
+    private void startBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                                                                                      getAuthToken(request));
+        String jobId = getResourceName(request);
+        try {
+            bundleEngine.start(jobId);
+        }
+        catch (BundleEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
@@ -537,6 +565,21 @@ public class V1JobServlet extends BaseJobServlet {
 
         return jobBean;
         //return json;
+    }
+    
+    private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, BaseEngineException {
+        JsonBean jobBean = null;
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request), getAuthToken(request));
+        String jobId = getResourceName(request);
+
+        try {
+            JsonBundleJob bundleJob = (JsonBundleJob) bundleEngine.getBundleJob(jobId);
+            jobBean = bundleJob;
+            return jobBean;
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
     }
 
     /**

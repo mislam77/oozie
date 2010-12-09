@@ -43,6 +43,7 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
@@ -591,7 +592,11 @@ public class OozieCLI {
                 }
             }
             else if (options.contains(INFO_OPTION)) {
-                if (commandLine.getOptionValue(INFO_OPTION).endsWith("-C")) {
+                if (commandLine.getOptionValue(INFO_OPTION).endsWith("-B")) {
+                    printBundleJob(wc.getBundleJobInfo(commandLine.getOptionValue(INFO_OPTION)), options
+                            .contains(LOCAL_TIME_OPTION), options.contains(VERBOSE_OPTION));
+                }
+                else if (commandLine.getOptionValue(INFO_OPTION).endsWith("-C")) {
                     String s = commandLine.getOptionValue(OFFSET_OPTION);
                     int start = Integer.parseInt((s != null) ? s : "0");
                     s = commandLine.getOptionValue(LEN_OPTION);
@@ -676,6 +681,34 @@ public class OozieCLI {
 
                 System.out.println(RULER);
             }
+        }
+    }
+    
+    private void printBundleJob(BundleJob bundleJob, boolean localtime, boolean verbose) {
+        System.out.println("Job ID : " + bundleJob.getId());
+
+        System.out.println(RULER);
+
+        List<CoordinatorJob> coordinators = bundleJob.getCoordinators();
+        System.out.println("Job Name : " + maskIfNull(bundleJob.getAppName()));
+        System.out.println("App Path : " + maskIfNull(bundleJob.getAppPath()));
+        System.out.println("Status   : " + bundleJob.getStatus());
+        System.out.println(RULER);
+
+        System.out.println("ID" + VERBOSE_DELIMITER + "App Name" + VERBOSE_DELIMITER + "Console URL"
+                + VERBOSE_DELIMITER + "Start Time" + VERBOSE_DELIMITER + "End Time" + VERBOSE_DELIMITER
+                + "Last Action Time" + VERBOSE_DELIMITER + "Status");
+        System.out.println(RULER);
+
+        for (CoordinatorJob coordinator : coordinators) {
+            System.out.println(maskIfNull(coordinator.getId()) + VERBOSE_DELIMITER 
+                    + maskIfNull(coordinator.getAppName()) + VERBOSE_DELIMITER 
+                    + maskIfNull(coordinator.getConsoleUrl()) + VERBOSE_DELIMITER
+                    + maskDate(coordinator.getStartTime(), localtime) + VERBOSE_DELIMITER +  maskDate(coordinator.getEndTime(), localtime)
+                    + maskDate(coordinator.getLastActionTime(), localtime)
+                    + coordinator.getStatus()); 
+
+            System.out.println(RULER);
         }
     }
 

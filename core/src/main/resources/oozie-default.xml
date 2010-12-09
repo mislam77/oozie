@@ -83,6 +83,7 @@
             org.apache.oozie.service.RecoveryService,
             org.apache.oozie.service.PurgeService,
             org.apache.oozie.service.CoordinatorEngineService,
+            org.apache.oozie.service.BundleEngineService,
             org.apache.oozie.service.DagEngineService,
             org.apache.oozie.service.CoordJobMatLookupTriggerService
         </value>

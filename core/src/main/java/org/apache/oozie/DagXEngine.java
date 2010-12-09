@@ -24,8 +24,10 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.wf.CompletedActionXCommand;
-import org.apache.oozie.command.wf.JobCommand;
-import org.apache.oozie.command.wf.JobsCommand;
+import org.apache.oozie.command.wf.DefinitionXCommand;
+import org.apache.oozie.command.wf.ExternalIdXCommand;
+import org.apache.oozie.command.wf.JobXCommand;
+import org.apache.oozie.command.wf.JobsXCommand;
 import org.apache.oozie.command.wf.KillCommand;
 import org.apache.oozie.command.wf.ReRunXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
@@ -34,8 +36,6 @@ import org.apache.oozie.command.wf.SubmitHttpXCommand;
 import org.apache.oozie.command.wf.SubmitMRXCommand;
 import org.apache.oozie.command.wf.SubmitPigXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
-import org.apache.oozie.command.wf.DefinitionCommand;
-import org.apache.oozie.command.wf.ExternalIdCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
 import org.apache.oozie.service.Services;
@@ -281,7 +281,7 @@ public class DagXEngine extends BaseEngine {
     @Override
     public WorkflowJob getJob(String jobId) throws DagEngineException {
         try {
-            return new JobCommand(jobId).call();
+            return new JobXCommand(jobId).call();
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -300,7 +300,7 @@ public class DagXEngine extends BaseEngine {
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws DagEngineException {
         try {
-            return new JobCommand(jobId, start, length).call();
+            return new JobXCommand(jobId, start, length).call();
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -317,7 +317,7 @@ public class DagXEngine extends BaseEngine {
     @Override
     public String getDefinition(String jobId) throws DagEngineException {
         try {
-            return new DefinitionCommand(jobId).call();
+            return new DefinitionXCommand(jobId).call();
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -407,7 +407,7 @@ public class DagXEngine extends BaseEngine {
     public WorkflowsInfo getJobs(String filterStr, int start, int len) throws DagEngineException {
         Map<String, List<String>> filter = parseFilter(filterStr);
         try {
-            return new JobsCommand(filter, start, len).call();
+            return new JobsXCommand(filter, start, len).call();
         }
         catch (CommandException dce) {
             throw new DagEngineException(dce);
@@ -424,7 +424,7 @@ public class DagXEngine extends BaseEngine {
     @Override
     public String getJobIdForExternalId(String externalId) throws DagEngineException {
         try {
-            return new ExternalIdCommand(externalId).call();
+            return new ExternalIdXCommand(externalId).call();
         }
         catch (CommandException dce) {
             throw new DagEngineException(dce);

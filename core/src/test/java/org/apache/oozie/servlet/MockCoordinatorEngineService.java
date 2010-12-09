@@ -65,7 +65,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             started.add(false);
         }
     }
-
+    
     @Override
     public CoordinatorXEngine getCoordinatorXEngine(String user, String authToken) {
         return new MockCoordinatorEngine(user, authToken);
@@ -273,6 +273,5 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         action.setCreatedConf(CONFIGURATION);
         return action;
     }
-
 
 }

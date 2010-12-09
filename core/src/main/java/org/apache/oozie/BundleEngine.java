@@ -18,9 +18,12 @@ import java.io.IOException;
 import java.io.Writer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.bundle.BundleJobXCommand;
+import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
 import org.apache.oozie.util.ParamChecker;
 
@@ -71,6 +74,15 @@ public class BundleEngine extends BaseEngine {
     @Override
     public CoordinatorJob getCoordJob(String jobId) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301));
+    }
+        
+    public BundleJob getBundleJob(String jobId) throws BaseEngineException {
+        try {
+            return new BundleJobXCommand(jobId).call();
+        }
+        catch (CommandException ex) {
+            throw new BaseEngineException(ex);
+        }
     }
 
     /* (non-Javadoc)
@@ -144,9 +156,13 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#start(java.lang.String)
      */
     @Override
-    public void start(String jobId) throws BaseEngineException {
-        // TODO Auto-generated method stub
-
+    public void start(String jobId) throws BundleEngineException {
+        try {
+            new BundleStartXCommand(jobId).call();
+        }
+        catch (CommandException e) {
+            throw new BundleEngineException(e);
+        }
     }
 
     /* (non-Javadoc)

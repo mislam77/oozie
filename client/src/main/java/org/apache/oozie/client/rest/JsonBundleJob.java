@@ -416,10 +416,10 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      *
      * @param coordJobs the coordJobs to set
      */
-    public void setCoordJobs(List<JsonCoordinatorJob> coordJobs) {
-        this.coordJobs = coordJobs;
+    public void setCoordJobs(List<? extends JsonCoordinatorJob> coordJobs) {
+        this.coordJobs = (coordJobs != null) ? coordJobs : new ArrayList<JsonCoordinatorJob>();
     }
-
+    
     /**
      * Convert a Bundle job list into a JSONArray.
      *
