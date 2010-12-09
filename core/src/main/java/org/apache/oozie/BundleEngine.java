@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.bundle.BundleSubmitCommand;
+import org.apache.oozie.command.bundle.BundleSubmitXCommand;
 import org.apache.oozie.util.ParamChecker;
 
 public class BundleEngine extends BaseEngine {
@@ -55,7 +55,7 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public String dryrunSubmit(Configuration conf, boolean startJob) throws BundleEngineException {
-        BundleSubmitCommand submit = new BundleSubmitCommand(true, conf, getAuthToken());
+        BundleSubmitXCommand submit = new BundleSubmitXCommand(true, conf, getAuthToken());
         try {
             String jobId = submit.call();
             return jobId;
@@ -163,7 +163,7 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws BundleEngineException {
-        BundleSubmitCommand submit = new BundleSubmitCommand(conf, getAuthToken());
+        BundleSubmitXCommand submit = new BundleSubmitXCommand(conf, getAuthToken());
         try {
             String jobId = submit.call();
             return jobId;
