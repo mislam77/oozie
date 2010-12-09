@@ -54,7 +54,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING')  order by w.lastModifiedTimestamp"),
 
     @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp") })
-public class BundleJobBean extends JsonBundleJob implements Writable {
+    public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic
     @Index
@@ -446,6 +446,10 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     public void setTimeUnit(Timeunit timeUnit) {
         super.setTimeUnit(timeUnit);
         this.timeUnitStr = timeUnit.toString();
+    }
+
+    public void setSuspendedTime(Date suspendTime) {
+        this.suspendedTimestamp = DateUtils.convertDateToTimestamp(suspendTime);
     }
 
 }
