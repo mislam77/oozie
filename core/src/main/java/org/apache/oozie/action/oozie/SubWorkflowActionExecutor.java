@@ -26,6 +26,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -47,13 +48,13 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
 
     static {
-        String[] badUserProps = {PropertiesUtils.DAYS, PropertiesUtils.HOURS, PropertiesUtils.MINUTES,
+        String[] badUserProps = { PropertiesUtils.DAYS, PropertiesUtils.HOURS, PropertiesUtils.MINUTES,
                 PropertiesUtils.KB, PropertiesUtils.MB, PropertiesUtils.GB, PropertiesUtils.TB, PropertiesUtils.PB,
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
-                PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
+                PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
 
-        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER, PropertiesUtils.HADOOP_UGI,
-                WorkflowAppService.HADOOP_JT_KERBEROS_NAME, WorkflowAppService.HADOOP_NN_KERBEROS_NAME};
+        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER, PropertiesUtils.HADOOP_UGI,
+                WorkflowAppService.HADOOP_JT_KERBEROS_NAME, WorkflowAppService.HADOOP_NN_KERBEROS_NAME };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
         PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
@@ -62,6 +63,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         super(ACTION_TYPE);
     }
 
+    @Override
     public void initActionType() {
         super.initActionType();
     }
@@ -120,6 +122,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         return jobId;
     }
 
+    @Override
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
         try {
             Element eConf = XmlUtils.parseXml(action.getConf());
@@ -150,6 +153,9 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
 
+                JobUtils.normalizeAppPath(subWorkflowConf.get(OozieClient.USER_NAME), subWorkflowConf
+                        .get(OozieClient.GROUP_NAME), subWorkflowConf);
+
                 subWorkflowId = oozieClient.run(subWorkflowConf.toProperties());
             }
             else {
@@ -167,11 +173,12 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         }
     }
 
+    @Override
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
         try {
             String externalStatus = action.getExternalStatus();
             WorkflowAction.Status status = externalStatus.equals("SUCCEEDED") ? WorkflowAction.Status.OK
-                                           : WorkflowAction.Status.ERROR;
+                    : WorkflowAction.Status.ERROR;
             context.setEndData(status, getActionSignal(status));
         }
         catch (Exception ex) {
@@ -179,6 +186,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         }
     }
 
+    @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
         try {
             String subWorkflowId = action.getExternalId();
@@ -202,6 +210,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         }
     }
 
+    @Override
     public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
         try {
             String subWorkflowId = action.getExternalId();
@@ -223,6 +232,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         FINAL_STATUS.add("FAILED");
     }
 
+    @Override
     public boolean isCompleted(String externalStatus) {
         return FINAL_STATUS.contains(externalStatus);
     }
