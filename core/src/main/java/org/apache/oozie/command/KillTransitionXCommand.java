@@ -14,27 +14,31 @@
  */
 package org.apache.oozie.command;
 
-import org.apache.oozie.util.XLog;
+import org.apache.oozie.client.Job;
 
 public abstract class KillTransitionXCommand extends TransitionXCommand<Void> {
-
-    protected final XLog LOG = XLog.getLog(KillTransitionXCommand.class);
 
     public KillTransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
     }
 
-    public KillTransitionXCommand(String name, String type, int priority, boolean dryrun) {
-        super(name, type, priority, dryrun);
-    }
-
     public abstract void killChildren() throws CommandException;
+
+    @Override
+    public final void transitToNext() {
+        if (job == null) {
+            job = this.getJob();
+        }
+        job.setStatus(Job.Status.KILLED);
+        job.setPending();
+    }
 
     @Override
     protected Void execute() throws CommandException {
         loadState();
-        killChildren();
         transitToNext();
+        updateJob();
+        killChildren();
         notifyParent();
         return null;
     }

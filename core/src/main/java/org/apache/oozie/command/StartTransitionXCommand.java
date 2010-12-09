@@ -15,16 +15,8 @@
 package org.apache.oozie.command;
 
 import org.apache.oozie.client.Job;
-import org.apache.oozie.util.XLog;
 
 public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
-
-    protected final XLog LOG = XLog.getLog(KillTransitionXCommand.class);
-
-    private Job job;
-
-    public abstract void StartChildren() throws CommandException;
-    public abstract void updateJob() throws CommandException;
 
     public StartTransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
@@ -34,8 +26,13 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
         super(name, type, priority, dryrun);
     }
 
+    public abstract void StartChildren() throws CommandException;
+
     @Override
-    public void transitToNext() {
+    public final void transitToNext() {
+        if (job == null) {
+            job = this.getJob();
+        }
         job.setStatus(Job.Status.RUNNING);
         job.setPending();
     }
@@ -43,7 +40,6 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         loadState();
-        job = this.getJob();
         transitToNext();
         updateJob();
         StartChildren();

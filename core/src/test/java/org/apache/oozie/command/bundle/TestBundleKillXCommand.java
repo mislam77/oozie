@@ -33,7 +33,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
 
-public class TestBundleStartXCommand extends XDataTestCase {
+public class TestBundleKillXCommand extends XDataTestCase {
 
     private Services services;
 
@@ -52,11 +52,11 @@ public class TestBundleStartXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Start bundle job
+     * Test : Kill bundle job
      *
      * @throws Exception
      */
-    public void testBundleStart1() throws Exception {
+    public void testBundleKill1() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -65,29 +65,18 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.PREP);
 
-        new BundleStartXCommand(job.getId()).call();
+        new BundleKillXCommand(job.getId()).call();
 
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(job.getStatus(), Job.Status.RUNNING);
-
-        BundleActionsGetCommand bundleActionsGetCmd = new BundleActionsGetCommand(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetCmd);
-
-        assertEquals(2, actions.size());
-        assertEquals(Job.Status.PREP, actions.get(0).getStatus());
-        assertEquals(true, actions.get(0).isPending());
-        assertEquals(true, actions.get(0).isCritical());
-        assertEquals(Job.Status.PREP, actions.get(1).getStatus());
-        assertEquals(true, actions.get(1).isPending());
-        assertEquals(false, actions.get(1).isCritical());
+        assertEquals(job.getStatus(), Job.Status.KILLED);
     }
 
     /**
-     * Test : Start bundle job
+     * Test : Kill bundle job
      *
      * @throws Exception
      */
-    public void testBundleStart2() throws Exception {
+    public void testBundleKill2() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -122,54 +111,67 @@ public class TestBundleStartXCommand extends XDataTestCase {
 
         assertEquals(2, actions.size());
         assertEquals(Job.Status.PREP, actions.get(0).getStatus());
-        assertEquals(true, actions.get(0).isPending());
-        assertEquals(true, actions.get(0).isCritical());
+        assertEquals(1, actions.get(0).getPending());
         assertEquals(Job.Status.PREP, actions.get(1).getStatus());
+        assertEquals(1, actions.get(1).getPending());
+
+        new BundleKillXCommand(job.getId()).call();
+
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(job.getStatus(), Job.Status.KILLED);
+
+        actions = jpaService.execute(bundleActionsGetCmd);
+
+        assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(1).isPending());
-        assertEquals(false, actions.get(1).isCritical());
     }
 
     /**
-     * Test : Start bundle job with dryrun
+     * Test : Kill bundle job
      *
      * @throws Exception
      */
-    public void testBundleStartDryrun() throws Exception {
+    public void testBundleKill3() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        BundleJobGetCommand bundleJobGetCmd = new BundleJobGetCommand(job.getId());
+
+        Configuration jobConf = null;
+        try {
+            jobConf = new XConfiguration(new StringReader(job.getConf()));
+        }
+        catch (IOException ioe) {
+            log.warn("Configuration parse error. read from DB :" + job.getConf(), ioe);
+            throw new CommandException(ErrorCode.E1005, ioe);
+        }
+
+        Path appPath = new Path(jobConf.get(OozieClient.BUNDLE_APP_PATH), "bundle.xml");
+        jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
+
+        BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf, job.getAuthToken());
+        submitCmd.call();
+
+        BundleJobGetCommand bundleJobGetCmd = new BundleJobGetCommand(submitCmd.getJob().getId());
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.PREP);
 
-        new BundleStartXCommand(job.getId(), true).call();
+        new BundleKillXCommand(job.getId()).call();
 
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(job.getStatus(), Job.Status.RUNNING);
-
-        BundleActionsGetCommand bundleActionsGetCmd = new BundleActionsGetCommand(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetCmd);
-
-        assertEquals(2, actions.size());
-        assertEquals(Job.Status.PREP, actions.get(0).getStatus());
-        assertEquals(true, actions.get(0).isPending());
-        assertEquals(true, actions.get(0).isCritical());
-        assertEquals(Job.Status.PREP, actions.get(1).getStatus());
-        assertEquals(true, actions.get(1).isPending());
-        assertEquals(false, actions.get(1).isCritical());
+        assertEquals(job.getStatus(), Job.Status.KILLED);
     }
 
     /**
-     * Test : Start bundle job but jobId is wrong
+     * Test : Kill bundle job but jobId is wrong
      *
      * @throws Exception
      */
-    public void testBundleStartFailed() throws Exception {
+    public void testBundleKillFailed() throws Exception {
         this.addRecordToBundleJobTable(Job.Status.PREP);
 
         try {
-            new BundleStartXCommand("bundle-id").call();
+            new BundleKillXCommand("bundle-id").call();
             fail("Job doesn't exist. Should fail.");
         } catch (CommandException ce) {
             //Job doesn't exist. Exception is expected.

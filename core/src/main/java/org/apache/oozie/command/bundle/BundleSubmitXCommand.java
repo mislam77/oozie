@@ -23,6 +23,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +41,6 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SubmitTransitionXCommand;
 import org.apache.oozie.command.jpa.BundleJobInsertCommand;
-import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
@@ -57,6 +57,9 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
+import org.jdom.Attribute;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.xml.sax.SAXException;
 
 /**
@@ -92,7 +95,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Constructor to create the Bundle Submit Command.
-     * 
+     *
      * @param conf : Configuration for bundle job
      * @param authToken : To be used for authentication
      */
@@ -104,15 +107,13 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Constructor to create the bundle submit command.
-     * 
+     *
      * @param dryrun
      * @param conf
      * @param authToken
      */
     public BundleSubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
-        super("coord_submit", "coord_submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
+        this(conf, authToken);
         this.dryrun = dryrun;
     }
 
@@ -134,7 +135,11 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             }
             conf = resolvedVarsConf;
 
-            this.jobId = storeToDB(bundleBean);
+            String resolvedJobXml = resolvedVars(bundleBean.getOrigJobXml(), conf);
+
+            //verify the uniqueness of coord names
+            verifyCoordNameUnique(resolvedJobXml);
+            this.jobId = storeToDB(bundleBean, resolvedJobXml);
 
             if (dryrun) {
                 Date startTime = bundleBean.getStartTime();
@@ -146,7 +151,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                     endTime = jobEndTime;
                 }
                 jobId = bundleBean.getId();
-                log.info("[" + jobId + "]: Update status to PREMATER");
+                log.info("[" + jobId + "]: Update status to PREP");
                 bundleBean.setStatus(Job.Status.PREP);
                 try {
                     new XConfiguration(new StringReader(bundleBean.getConf()));
@@ -159,7 +164,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             }
         }
         catch (Exception ex) {
-            throw new CommandException(ErrorCode.E1004, "Validation ERROR :", ex.getMessage(), ex);
+            throw new CommandException(ErrorCode.E1310, ex.getMessage(), ex);
         }
         log.info("ENDED Bundle Submit");
         return this.jobId;
@@ -227,16 +232,16 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             log.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
         }
         catch (BundleJobException ex) {
-            log.warn("ERROR:  ", ex);
+            log.warn("BundleJobException:  ", ex);
             throw new CommandException(ex);
         }
         catch (IllegalArgumentException iex) {
-            log.warn("ERROR:  ", iex);
-            throw new CommandException(ErrorCode.E1003, iex);
+            log.warn("IllegalArgumentException:  ", iex);
+            throw new CommandException(ErrorCode.E1310, iex);
         }
         catch (Exception ex) {
-            log.warn("ERROR:  ", ex);
-            throw new CommandException(ErrorCode.E0803, ex);
+            log.warn("Exception:  ", ex);
+            throw new CommandException(ErrorCode.E1310, ex);
         }
     }
 
@@ -248,7 +253,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     protected void mergeDefaultConfig() throws CommandException {
         Path appPath = new Path(conf.get(OozieClient.BUNDLE_APP_PATH));
         Path configDefault = new Path(appPath.getParent(), CONFIG_DEFAULT);
-        CoordUtils.getHadoopConf(conf);
+        //CoordUtils.getHadoopConf(conf);
         FileSystem fs;
         try {
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
@@ -301,7 +306,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     protected String readDefinition(String appPath) throws BundleJobException {
         String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-        Configuration confHadoop = CoordUtils.getHadoopConf(conf);
+        //Configuration confHadoop = CoordUtils.getHadoopConf(conf);
         try {
             URI uri = new URI(appPath);
             log.debug("user =" + user + " group =" + group);
@@ -315,7 +320,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             return writer.toString();
         }
         catch (IOException ex) {
-            log.warn("IOException :" + XmlUtils.prettyPrint(confHadoop), ex);
+            log.warn("IOException :" + XmlUtils.prettyPrint(conf), ex);
             throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
@@ -333,7 +338,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Validate against Bundle XSD file
-     * 
+     *
      * @param xmlContent : Input Bundle xml
      * @throws BundleJobException
      */
@@ -348,7 +353,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             throw new BundleJobException(ErrorCode.E0701, ex.getMessage(), ex);
         }
         catch (IOException ex) {
-            // ex.printStackTrace();
             log.warn("IOException :", ex);
             throw new BundleJobException(ErrorCode.E0702, ex.getMessage(), ex);
         }
@@ -356,12 +360,12 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     /**
      * Write a Bundle Job into database
-     * 
-     * @param : Bundle job bean
-     * @return Job if.
+     *
+     * @param Bundle job bean
+     * @return job id
      * @throws CommandException
      */
-    private String storeToDB(BundleJobBean bundleJob) throws CommandException {
+    private String storeToDB(BundleJobBean bundleJob, String resolvedJobXml) throws CommandException {
         try {
             String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE);
             bundleJob.setId(jobId);
@@ -374,7 +378,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setUser(conf.get(OozieClient.USER_NAME));
             bundleJob.setGroup(conf.get(OozieClient.GROUP_NAME));
             bundleJob.setConf(XmlUtils.prettyPrint(conf).toString());
-            bundleJob.setJobXml(resolvedVars(bundleBean.getOrigJobXml(), conf));
+            bundleJob.setJobXml(resolvedJobXml);
             bundleJob.setLastModifiedTime(new Date());
 
             if (!dryrun) {
@@ -396,18 +400,12 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return bundleBean;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#setJob(org.apache.oozie.client.Job)
-     */
-    @Override
-    public void setJob(Job job) {
-        this.bundleBean = (BundleJobBean) job;
-    }
-
     /**
+     * Resolve job xml with conf
+     *
      * @param bundleXml
      * @param conf
-     * @return
+     * @return resolved job xml
      * @throws BundleJobException
      */
     private String resolvedVars(String bundleXml, Configuration conf) throws BundleJobException {
@@ -421,8 +419,10 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     }
 
     /**
+     * Create ELEvaluator
+     *
      * @param conf
-     * @return
+     * @return ELEvaluator
      * @throws BundleJobException
      */
     public ELEvaluator createEvaluator(Configuration conf) throws BundleJobException {
@@ -439,5 +439,44 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             throw new BundleJobException(ErrorCode.E1004, e.getMessage(), e);
         }
         return eval;
+    }
+
+    /**
+     * Verify the uniqueness of coord names
+     *
+     * @param resolved job xml
+     * @throws CommandException
+     */
+    @SuppressWarnings("unchecked")
+    private Void verifyCoordNameUnique(String resolvedJobXml) throws CommandException {
+        Set<String> set = new HashSet<String>();
+        try {
+            Element bAppXml = XmlUtils.parseXml(resolvedJobXml);
+            List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
+            for (Element elem : coordElems) {
+                Attribute name = elem.getAttribute("name");
+                if (name != null) {
+                    if (set.contains(name.getValue())) {
+                        throw new CommandException(ErrorCode.E1304, name);
+                    }
+                    set.add(name.getValue());
+                }
+                else {
+                    throw new CommandException(ErrorCode.E1305);
+                }
+            }
+        }
+        catch (JDOMException jex) {
+            throw new CommandException(ErrorCode.E1301, jex);
+        }
+
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
+     */
+    @Override
+    public void updateJob() throws CommandException {
     }
 }

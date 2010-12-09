@@ -36,10 +36,6 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     private BundleActionBean bundleaction;
     private final Job.Status prevStatus;
 
-    /**
-     * @param coordjob
-     * @param prevStatus
-     */
     public BundleStatusUpdateXCommand(CoordinatorJobBean coordjob, CoordinatorJob.Status prevStatus) {
         super("BundleStatusUpdate", "BundleStatusUpdate", 1);
         this.coordjob = coordjob;
@@ -76,6 +72,13 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     }
 
     /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
+     */
+    @Override
+    public void updateJob() throws CommandException {
+    }
+
+    /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#execute()
      */
     @Override
@@ -85,7 +88,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             bundleaction.setStatus(coordCurrentStatus);
 
             if (bundleaction.isPending()) {
-                bundleaction.setPending(bundleaction.getPending() - 1);
+                bundleaction.decrementAndGetPending();
             }
             bundleaction.setLastModifiedTime(new Date());
             bundleaction.setCoordId(coordjob.getId());
@@ -164,8 +167,10 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     }
 
     /**
+     * Convert coord job status to job status.
+     *
      * @param coordStatus
-     * @return
+     * @return job status
      */
     public static Job.Status convertCoordStatustoJob(CoordinatorJob.Status coordStatus) {
         if (coordStatus == CoordinatorJob.Status.PREMATER) {
@@ -179,4 +184,5 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
         }
         return null;
     }
+
 }

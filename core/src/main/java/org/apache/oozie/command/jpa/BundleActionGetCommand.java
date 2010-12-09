@@ -29,14 +29,12 @@ import org.apache.oozie.util.ParamChecker;
  */
 public class BundleActionGetCommand implements JPACommand<BundleActionBean> {
 
-    private String bundleId = null;
-    private String coordName = null;
+    private String bundleActionId = null;
 
     public BundleActionGetCommand(String bundleId, String coordName) {
         ParamChecker.notNull(bundleId, "bundleId");
         ParamChecker.notNull(coordName, "coordName");
-        this.bundleId = bundleId;
-        this.coordName = coordName;
+        this.bundleActionId = bundleId + "_" + coordName;
     }
 
     @Override
@@ -50,8 +48,7 @@ public class BundleActionGetCommand implements JPACommand<BundleActionBean> {
         List<BundleActionBean> baBeans;
         try {
             Query q = em.createNamedQuery("GET_BUNDLE_ACTION");
-            q.setParameter("bundleId", bundleId);
-            q.setParameter("coordName", coordName);
+            q.setParameter("bundleActionId", bundleActionId);
             baBeans = q.getResultList();
         }
         catch (Exception e) {
@@ -64,7 +61,7 @@ public class BundleActionGetCommand implements JPACommand<BundleActionBean> {
             return bean;
         }
         else {
-            throw new CommandException(ErrorCode.E0605, bundleId, coordName);
+            throw new CommandException(ErrorCode.E0605, bundleActionId);
         }
     }
 }

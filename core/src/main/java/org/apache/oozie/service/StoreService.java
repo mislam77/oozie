@@ -14,13 +14,6 @@
  */
 package org.apache.oozie.service;
 
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.Properties;
-
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
@@ -28,44 +21,13 @@ import org.apache.oozie.store.SLAStore;
 import org.apache.oozie.store.Store;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.ErrorCode;
-import org.apache.openjpa.persistence.OpenJPAEntityManagerFactorySPI;
-import org.apache.hadoop.conf.Configuration;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-
-import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.SLAEventBean;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
-import org.apache.oozie.client.rest.JsonWorkflowAction;
-import org.apache.oozie.client.rest.JsonWorkflowJob;
-import org.apache.oozie.client.rest.JsonSLAEvent;
 
 /**
  * Base service for persistency of jobs and actions.
  */
 public class StoreService implements Service {
-
-    public static final String CONF_PREFIX = Service.CONF_PREFIX + "StoreService.";
-    public static final String CONF_URL = CONF_PREFIX + "jdbc.url";
-    public static final String CONF_DRIVER = CONF_PREFIX + "jdbc.driver";
-    public static final String CONF_USERNAME = CONF_PREFIX + "jdbc.username";
-    public static final String CONF_PASSWORD = CONF_PREFIX + "jdbc.password";
-    public static final String CONF_MAX_ACTIVE_CONN = CONF_PREFIX + "pool.max.active.conn";
-    public static final String CONF_CREATE_DB_SCHEMA = CONF_PREFIX + "create.db.schema";
-
-    private EntityManagerFactory factory;
 
     /**
      * Return instance of store.

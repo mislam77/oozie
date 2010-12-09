@@ -15,18 +15,15 @@
 package org.apache.oozie.command;
 
 import org.apache.oozie.client.Job;
-import org.apache.oozie.util.XLog;
 
 /**
  * Base class for submit transition command.
  */
 public abstract class SubmitTransitionXCommand extends TransitionXCommand<String> {
-    private String jobId;
-    private Job job;
-
-    protected final XLog LOG = XLog.getLog(SubmitTransitionXCommand.class);
 
     /**
+     * Submit the job
+     *
      * @return String
      * @throws CommandException
      */
@@ -56,6 +53,9 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
      */
     @Override
     public void transitToNext() {
+        if (job == null) {
+            job = this.getJob();
+        }
         job.setStatus(Job.Status.PREP);
         job.resetPending();
     }
@@ -66,10 +66,9 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
     @Override
     protected String execute() throws CommandException {
         loadState();
-        this.job = getJob();
         transitToNext();
-        this.jobId = submit();
+        String jobId = submit();
         notifyParent();
-        return this.jobId;
+        return jobId;
     }
 }

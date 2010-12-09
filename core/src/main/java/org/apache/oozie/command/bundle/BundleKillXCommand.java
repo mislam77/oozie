@@ -16,27 +16,29 @@ package org.apache.oozie.command.bundle;
 
 import java.util.List;
 
+import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
-import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
-import org.apache.oozie.client.BundleJob;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.coord.CoordKillXCommand;
+import org.apache.oozie.command.jpa.BundleActionUpdateCommand;
+import org.apache.oozie.command.jpa.BundleActionsGetCommand;
 import org.apache.oozie.command.jpa.BundleJobGetCommand;
-import org.apache.oozie.command.jpa.CoordJobsGetForBundleCommand;
+import org.apache.oozie.command.jpa.BundleJobUpdateCommand;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 
 public class BundleKillXCommand extends KillTransitionXCommand {
+    protected final XLog LOG = XLog.getLog(BundleKillXCommand.class);
     private final String jobId;
-    //TODO should change to JobBean
     private BundleJobBean bundleJob;
-    private List<CoordinatorJobBean> coordBeans;
+    private List<BundleActionBean> bundleActions;
     private JPAService jpaService = null;
 
     public BundleKillXCommand(String jobId) {
@@ -44,33 +46,25 @@ public class BundleKillXCommand extends KillTransitionXCommand {
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
     }
 
-    public BundleKillXCommand(String jobId, boolean dryrun) {
-        super("bundle_kill", "bundle_kill", 1, dryrun);
-        this.jobId = ParamChecker.notEmpty(jobId, "jobId");
-    }
-
-
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getEntityKey()
+     */
     @Override
-    public void killChildren() {
-        if (coordBeans != null) {
-            for (CoordinatorJobBean cBean :coordBeans) {
-                cBean.setStatus(CoordinatorJob.Status.KILLED);
-            }
-        }
-        LOG.debug("Killed coord jobs for the bundle=[{0}]", jobId);
+    protected String getEntityKey() {
+        return jobId;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#isLockRequired()
+     */
     @Override
-    public void transitToNext() {
-        if (bundleJob!= null) {
-            this.bundleJob.setStatus(BundleJob.Status.KILLED);
-        }
+    protected boolean isLockRequired() {
+        return true;
     }
 
-    @Override
-    public void notifyParent() {
-    }
-
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#loadState()
+     */
     @Override
     public void loadState() throws CommandException {
         try {
@@ -78,8 +72,10 @@ public class BundleKillXCommand extends KillTransitionXCommand {
 
             if (jpaService != null) {
                 this.bundleJob = jpaService.execute(new BundleJobGetCommand(jobId));
-                //TODO setLogInfo(bundleJob);
-                this.coordBeans = jpaService.execute(new CoordJobsGetForBundleCommand(jobId));
+                this.bundleActions = jpaService.execute(new BundleActionsGetCommand(jobId));
+                setLogInfo(bundleJob);
+                super.setJob(bundleJob);
+
             }
             else {
                 throw new CommandException(ErrorCode.E0610);
@@ -90,28 +86,61 @@ public class BundleKillXCommand extends KillTransitionXCommand {
         }
     }
 
-    @Override
-    protected String getEntityKey() {
-        return jobId;
-    }
-
-    @Override
-    protected boolean isLockRequired() {
-        return true;
-    }
-
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
+     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.KillTransitionXCommand#killChildren()
+     */
+    @Override
+    public void killChildren() throws CommandException {
+        if (bundleActions != null) {
+            for (BundleActionBean action : bundleActions) {
+                if (action.getCoordId() != null) {
+                    queue(new CoordKillXCommand(action.getCoordId()));
+                }
+                updateBundleAction(action);
+            }
+        }
+        LOG.debug("Killed coord jobs for the bundle=[{0}]", jobId);
+    }
+
+    /**
+     * Update bundle action
+     *
+     * @param action
+     * @throws CommandException
+     */
+    private void updateBundleAction(BundleActionBean action) throws CommandException {
+        action.incrementAndGetPending();
+        jpaService.execute(new BundleActionUpdateCommand(action));
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
+     */
+    @Override
+    public void notifyParent() {
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#getJob()
+     */
     @Override
     public Job getJob() {
         return bundleJob;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
+     */
     @Override
-    public void setJob(Job job) {
-        this.bundleJob = (BundleJobBean) job;
+    public void updateJob() throws CommandException {
+        jpaService.execute(new BundleJobUpdateCommand(bundleJob));
     }
 
 }

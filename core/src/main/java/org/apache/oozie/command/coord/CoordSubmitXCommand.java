@@ -45,7 +45,6 @@ import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.jpa.CoordJobInsertCommand;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.service.DagXLogInfoService;
@@ -88,6 +87,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
 
     private final Configuration conf;
     private final String authToken;
+    private final String bundleId;
+    private final String coordName;
     private boolean dryrun;
     private JPAService jpaService = null;
 
@@ -133,8 +134,33 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         super("coord_submit", "coord_submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
+        this.bundleId = null;
+        this.coordName = null;
     }
 
+    /**
+     * Constructor to create the Coordinator Submit Command by bundle job.
+     *
+     * @param conf : Configuration for Coordinator job
+     * @param authToken : To be used for authentication
+     * @param bundleId : bundle id
+     * @param coordName : coord name
+     */
+    public CoordSubmitXCommand(Configuration conf, String authToken, String bundleId, String coordName) {
+        super("coord_submit", "coord_submit", 1);
+        this.conf = ParamChecker.notNull(conf, "conf");
+        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
+        this.bundleId = ParamChecker.notEmpty(bundleId, "bundleId");
+        this.coordName = ParamChecker.notEmpty(bundleId, "coordName");
+    }
+
+    /**
+     * Constructor to create the Coordinator Submit Command.
+     *
+     * @param dryrun : if dryrun
+     * @param conf : Configuration for Coordinator job
+     * @param authToken : To be used for authentication
+     */
     public CoordSubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
         this(conf, authToken);
         this.dryrun = dryrun;
@@ -194,7 +220,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 }
                 String action = coordActionMatCom.materializeJobs(true, coordJob, jobConf, null);
                 String output = coordJob.getJobXml() + System.getProperty("line.separator")
-                + "***actions for instance***" + action;
+                        + "***actions for instance***" + action;
                 return output;
             }
         }
@@ -213,12 +239,15 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             log.warn("ERROR:  ", ex);
             throw new CommandException(ErrorCode.E0803, ex);
         }
-        finally{
-            if(exceptionOccured){
+        finally {
+            if (exceptionOccured) {
                 coordJob.setStatus(CoordinatorJob.Status.FAILED);
             }
-            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
-            bundleStatusUpdate.call();
+            //update bundle action
+            if (this.bundleId != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                bundleStatusUpdate.call();
+            }
         }
         log.info("ENDED Coordinator Submit jobId=" + jobId);
         return jobId;
@@ -266,14 +295,14 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @throws CommandException
      */
     protected void mergeDefaultConfig() throws CommandException {
-        Path appPath = new Path (conf.get(OozieClient.COORDINATOR_APP_PATH));
+        Path appPath = new Path(conf.get(OozieClient.COORDINATOR_APP_PATH));
         Path configDefault = new Path(appPath.getParent(), CONFIG_DEFAULT);
-        //Configuration fsConfig = CoordUtils.getHadoopConf(conf);
+        // Configuration fsConfig = CoordUtils.getHadoopConf(conf);
         try {
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, configDefault.toUri(),
-                    new Configuration());
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
+                    configDefault.toUri(), new Configuration());
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
                 PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
@@ -305,7 +334,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @throws Exception
      */
     public Element basicResolveAndIncludeDS(String appXml, Configuration conf, CoordinatorJobBean coordJob)
-    throws CoordinatorJobException, Exception {
+            throws CoordinatorJobException, Exception {
         Element basicResolvedApp = resolveInitial(conf, appXml, coordJob);
         includeDataSets(basicResolvedApp, conf);
         return basicResolvedApp;
@@ -377,7 +406,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     @SuppressWarnings("unchecked")
     protected Element resolveInitial(Configuration conf, String appXml, CoordinatorJobBean coordJob)
-    throws CoordinatorJobException, Exception {
+            throws CoordinatorJobException, Exception {
         Element eAppXml = XmlUtils.parseXml(appXml);
         // job's main attributes
         // frequency
@@ -440,14 +469,16 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
 
         resolveTagContents("app-path", eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
                 eAppXml.getNamespace()), evalNofuncs);
-        // TODO: If action or workflow tag is missing, NullPointerException will occur
+        // TODO: If action or workflow tag is missing, NullPointerException will
+        // occur
         Element configElem = eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
                 eAppXml.getNamespace()).getChild("configuration", eAppXml.getNamespace());
         evalData = CoordELEvaluator.createELEvaluatorForDataEcho(conf, "coord-job-submit-data", dataNameList);
         if (configElem != null) {
             for (Element propElem : (List<Element>) configElem.getChildren("property", configElem.getNamespace())) {
                 resolveTagContents("name", propElem, evalData);
-                // Want to check the data-integrity but don't want to modify the XML
+                // Want to check the data-integrity but don't want to modify the
+                // XML
                 // for properties only
                 Element tmpProp = (Element) propElem.clone();
                 resolveTagContents("value", tmpProp, evalData);
@@ -663,7 +694,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 if (dsList.contains(dsName)) {// Override with this DS
                     // Remove old DS
                     removeDataSet(allDataSets, dsName);
-                    // throw new RuntimeException("Duplicate Dataset " + dsName);
+                    // throw new RuntimeException("Duplicate Dataset " +
+                    // dsName);
                 }
                 else {
                     dsList.add(dsName);
@@ -687,7 +719,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     @SuppressWarnings("unchecked")
     private void includeOneDSFile(String incDSFile, List<String> dsList, Element allDataSets, Namespace dsNameSpace)
-    throws CoordinatorJobException {
+            throws CoordinatorJobException {
         Element tmpDataSets = null;
         try {
             String dsXml = readDefinition(incDSFile);
@@ -706,7 +738,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             }
             dsList.add(dsName);
             Element tmp = (Element) e.clone();
-            // TODO: Don't like to over-write the external/include DS's namespace
+            // TODO: Don't like to over-write the external/include DS's
+            // namespace
             tmp.setNamespace(dsNameSpace);
             tmp.getChild("uri-template").setNamespace(dsNameSpace);
             if (e.getChild("done-flag") != null) {
@@ -750,7 +783,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     protected String readDefinition(String appPath) throws CoordinatorJobException {
         String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-        Configuration confHadoop = CoordUtils.getHadoopConf(conf);
+        // Configuration confHadoop = CoordUtils.getHadoopConf(conf);
         try {
             URI uri = new URI(appPath);
             log.debug("user =" + user + " group =" + group);
@@ -764,7 +797,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             return writer.toString();
         }
         catch (IOException ex) {
-            log.warn("IOException :" + XmlUtils.prettyPrint(confHadoop), ex);
+            log.warn("IOException :" + XmlUtils.prettyPrint(conf), ex);
             throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
@@ -792,7 +825,17 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR);
         coordJob.setId(jobId);
         coordJob.setAuthToken(this.authToken);
-        coordJob.setAppName(eJob.getAttributeValue("name"));
+        if (this.bundleId != null) {
+            // this coord job is created from bundle
+            coordJob.setBundleId(this.bundleId);
+        }
+        if (this.coordName != null) {
+            // this coord job is created from bundle
+            coordJob.setAppName(this.coordName);
+        }
+        else {
+            coordJob.setAppName(eJob.getAttributeValue("name"));
+        }
         coordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
         coordJob.setStatus(CoordinatorJob.Status.PREP);
         coordJob.setCreatedTime(new Date());

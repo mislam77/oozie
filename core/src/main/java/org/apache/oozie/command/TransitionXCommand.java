@@ -15,8 +15,11 @@
 package org.apache.oozie.command;
 
 import org.apache.oozie.client.Job;
+import org.apache.oozie.util.ParamChecker;
 
 public abstract class TransitionXCommand<T> extends XCommand<T> {
+
+    protected Job job;
 
     public TransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
@@ -28,10 +31,25 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
 
     public abstract void transitToNext() throws CommandException;
 
+    public abstract void updateJob() throws CommandException;
+
     public abstract void notifyParent() throws CommandException;
 
-    public abstract Job getJob();
+    @Override
+    protected T execute() throws CommandException {
+        loadState();
+        transitToNext();
+        updateJob();
+        notifyParent();
+        return null;
+    }
 
-    public abstract void setJob(Job job);
+    public Job getJob() {
+        return job;
+    }
+
+    public void setJob(Job job) {
+        this.job = ParamChecker.notNull(job, "job");
+    }
 
 }

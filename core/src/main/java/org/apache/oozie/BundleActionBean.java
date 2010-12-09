@@ -40,20 +40,20 @@ import org.apache.openjpa.persistence.jdbc.Index;
 @Table(name = "BUNDLE_ACTIONS")
 @DiscriminatorColumn(name = "bean_type", discriminatorType = DiscriminatorType.STRING)
 @NamedQueries( {
-    @NamedQuery(name = "DELETE_BUNDLE_ACTION", query = "delete from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
+    @NamedQuery(name = "DELETE_BUNDLE_ACTION", query = "delete from BundleActionBean w where w.bundleActionId = :bundleActionId"),
 
     @NamedQuery(name = "GET_BUNDLE_ACTIONS", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId"),
 
-    @NamedQuery(name = "GET_BUNDLE_ACTION", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId AND w.coordName = :coordName"),
+    @NamedQuery(name = "GET_BUNDLE_ACTION", query = "select OBJECT(w) from BundleActionBean w where w.bundleActionId = :bundleActionId"),
 
     @NamedQuery(name = "GET_BUNDLE_ACTIONS_COUNT", query = "select count(w) from BundleActionBean w"),
 
     @NamedQuery(name = "GET_BUNDLE_ACTIONS_OLDER_THAN", query = "select OBJECT(w) from BundleActionBean w order by w.lastModifiedTimestamp") })
-    public class BundleActionBean implements Writable {
+public class BundleActionBean implements Writable {
 
     @Id
     @Index
-    @Column(name = "bundleaction_id")
+    @Column(name = "bundle_action_id")
     private String bundleActionId = null;
 
     @Column(name = "bundle_id")
@@ -190,7 +190,27 @@ import org.apache.openjpa.persistence.jdbc.Index;
     }
 
     /**
-     * @param pending set pending to false
+     * increment pending and return it
+     *
+     * @return pending
+     */
+    public int incrementAndGetPending() {
+        this.pending++;
+        return pending;
+    }
+
+    /**
+     * decrement pending and return it
+     *
+     * @return pending
+     */
+    public int decrementAndGetPending() {
+        this.pending--;
+        return pending;
+    }
+
+    /**
+     * @return pending
      */
     public int getPending() {
         return this.pending;
@@ -202,7 +222,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
      * @return if the action is pending.
      */
     public boolean isPending() {
-        return pending > 1 ? true : false;
+        return pending > 0 ? true : false;
     }
 
     /**

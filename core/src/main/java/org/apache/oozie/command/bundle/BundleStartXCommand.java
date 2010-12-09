@@ -24,8 +24,6 @@ import java.util.Map.Entry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
-import org.apache.oozie.CoordinatorEngineException;
-import org.apache.oozie.CoordinatorXEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
@@ -33,16 +31,18 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StartTransitionXCommand;
+import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.jpa.BundleActionGetCommand;
 import org.apache.oozie.command.jpa.BundleActionInsertCommand;
 import org.apache.oozie.command.jpa.BundleActionUpdateCommand;
 import org.apache.oozie.command.jpa.BundleJobGetCommand;
 import org.apache.oozie.command.jpa.BundleJobUpdateCommand;
-import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -52,6 +52,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     private final String jobId;
     private BundleJobBean bundleJob;
     private JPAService jpaService = null;
+    protected final XLog LOG = XLog.getLog(BundleStartXCommand.class);
 
     public BundleStartXCommand(String jobId) {
         super("bundle_start", "bundle_start", 1);
@@ -63,20 +64,32 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getEntityKey()
+     */
     @Override
     protected String getEntityKey() {
         return jobId;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#isLockRequired()
+     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
+     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#loadState()
+     */
     @Override
     public void loadState() throws CommandException {
         try {
@@ -85,6 +98,8 @@ public class BundleStartXCommand extends StartTransitionXCommand {
             if (jpaService != null) {
                 this.bundleJob = jpaService.execute(new BundleJobGetCommand(jobId));
                 setLogInfo(bundleJob);
+                super.setJob(bundleJob);
+
             }
             else {
                 throw new CommandException(ErrorCode.E0610);
@@ -95,6 +110,9 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.StartTransitionXCommand#StartChildren()
+     */
     @Override
     public void StartChildren() throws CommandException {
         LOG.debug("Started coord jobs for the bundle=[{0}]", jobId);
@@ -103,10 +121,18 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         LOG.debug("Ended coord jobs for the bundle=[{0}]", jobId);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
+     */
     @Override
     public void notifyParent() {
     }
 
+    /**
+     * Insert bundle actions
+     *
+     * @throws CommandException
+     */
     @SuppressWarnings("unchecked")
     private void insertBundleActions() throws CommandException {
         if (bundleJob != null) {
@@ -149,6 +175,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
 
     private BundleActionBean createBundleAction(String jobId, String coordName, boolean isCritical) {
         BundleActionBean action = new BundleActionBean();
+        action.setBundleActionId(jobId + "_" + coordName);
         action.setBundleId(jobId);
         action.setCoordName(coordName);
         action.setStatus(Job.Status.PREP);
@@ -161,6 +188,11 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         return action;
     }
 
+    /**
+     * Start Coord Jobs
+     *
+     * @throws CommandException
+     */
     @SuppressWarnings("unchecked")
     private void startCoordJobs() throws CommandException {
         if (bundleJob != null) {
@@ -171,25 +203,14 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                     Attribute name = coordElem.getAttribute("name");
                     Configuration coordConf = mergeConfig(coordElem);
                     coordConf.set(OozieClient.BUNDLE_ID, jobId);
-                    // TODO change to queue CoordSubmitCmd
-                    CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class)
-                    .getCoordinatorXEngine(bundleJob.getUser(), bundleJob.getAuthToken());
 
-                    String coordId;
-                    if (dryrun) {
-                        coordId = coordEngine.dryrunSubmit(coordConf, true);
-                    }
-                    else {
-                        coordId = coordEngine.submitJob(coordConf, true);
-                    }
-                    updateBundleAction(name.getValue(), coordId);
+                    queue(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken()));
+
+                    updateBundleAction(name.getValue());
                 }
             }
             catch (JDOMException jex) {
                 throw new CommandException(ErrorCode.E1301, jex);
-            }
-            catch (CoordinatorEngineException ce) {
-                throw new CommandException(ErrorCode.E1019, ce);
             }
         }
         else {
@@ -197,16 +218,16 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         }
     }
 
-    private void updateBundleAction(String coordName, String coordId) throws CommandException {
+    private void updateBundleAction(String coordName) throws CommandException {
         BundleActionBean action = jpaService.execute(new BundleActionGetCommand(jobId, coordName));
-        action.setCoordId(coordId);
-        action.setPending(action.getPending() + 1);
+        action.incrementAndGetPending();
         jpaService.execute(new BundleActionUpdateCommand(action));
     }
 
     /**
-     * Merge Bundle job config and the configuration from the coord job to pass to Coord Engine
-     * 
+     * Merge Bundle job config and the configuration from the coord job to pass
+     * to Coord Engine
+     *
      * @param coordElem
      * @return Configuration
      * @throws CommandException
@@ -242,23 +263,31 @@ public class BundleStartXCommand extends StartTransitionXCommand {
             XConfiguration.copy(localConf, runConf);
         }
 
-        // Step 3: Extract value of 'app-path' in coordElem, and save it as a
-        // new property called 'oozie.coord.application.path'
+        // Step 3: Extract value of 'app-path' in coordElem, save it as a
+        // new property called 'oozie.coord.application.path', and normalize.
         String appPath = coordElem.getChild("app-path", coordElem.getNamespace()).getValue();
         runConf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        // Normalize coordinator appPath here;
+        try {
+            JobUtils.normalizeAppPath(runConf.get(OozieClient.USER_NAME), runConf.get(OozieClient.GROUP_NAME), runConf);
+        }
+        catch (IOException e) {
+            throw new CommandException(ErrorCode.E1001, runConf.get(OozieClient.COORDINATOR_APP_PATH));
+        }
         return runConf;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#getJob()
+     */
     @Override
     public Job getJob() {
         return bundleJob;
     }
 
-    @Override
-    public void setJob(Job job) {
-        this.bundleJob = (BundleJobBean) job;
-    }
-
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
+     */
     @Override
     public void updateJob() throws CommandException {
         jpaService.execute(new BundleJobUpdateCommand(bundleJob));
