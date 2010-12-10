@@ -23,6 +23,8 @@ import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.bundle.BundleJobResumeXCommand;
+import org.apache.oozie.command.bundle.BundleJobSuspendXCommand;
 import org.apache.oozie.command.bundle.BundleJobXCommand;
 import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.command.bundle.BundleStartXCommand;
@@ -163,6 +165,13 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public void resume(String jobId) throws BundleEngineException {
+        BundleJobResumeXCommand resume = new BundleJobResumeXCommand(jobId);
+        try {
+            resume.call();
+        }
+        catch (CommandException ex) {
+            throw new BundleEngineException(ex);
+        }
     }
 
     /* (non-Javadoc)
@@ -216,5 +225,12 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public void suspend(String jobId) throws BundleEngineException {
+        BundleJobSuspendXCommand suspend = new BundleJobSuspendXCommand(jobId);
+        try {
+            suspend.call();
+        }
+        catch (CommandException ex) {
+            throw new BundleEngineException(ex);
+        }
     }
 }
