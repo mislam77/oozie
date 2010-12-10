@@ -24,7 +24,7 @@ import org.apache.oozie.command.jpa.CoordActionsGetForJobCommand;
 import org.apache.oozie.command.jpa.CoordJobGetCommand;
 import org.apache.oozie.command.jpa.CoordJobUpdateCommand;
 import org.apache.oozie.command.jpa.CoordActionUpdateCommand;
-import org.apache.oozie.command.wf.WorkflowKillXCommand;
+import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.service.JPAService;
@@ -96,7 +96,7 @@ public class CoordKillXCommand extends CoordinatorXCommand<Void> {
                         && action.getStatus() != CoordinatorActionBean.Status.KILLED) {
                     // queue a WorkflowKillXCommand to delete the workflow job and actions
                     if (action.getExternalId() != null) {
-                        queue(new WorkflowKillXCommand(action.getExternalId()));
+                        queue(new KillXCommand(action.getExternalId()));
                     }
                     action.setStatus(CoordinatorActionBean.Status.KILLED);
                     jpaService.execute(new CoordActionUpdateCommand(action));

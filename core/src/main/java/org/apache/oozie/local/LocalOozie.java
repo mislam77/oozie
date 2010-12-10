@@ -14,8 +14,8 @@
  */
 package org.apache.oozie.local;
 
-import org.apache.oozie.CoordinatorXEngine;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.CoordinatorEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
 import org.apache.oozie.LocalOozieClientCoord;
 import org.apache.oozie.client.OozieClient;
@@ -158,7 +158,7 @@ public class LocalOozie {
             throw new IllegalStateException("LocalOozie is not initialized");
         }
         ParamChecker.notEmpty(user, "user");
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(user, "undef");
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, "undef");
         return new LocalOozieClient(dagEngine);
     }
 
@@ -183,7 +183,7 @@ public class LocalOozie {
             throw new IllegalStateException("LocalOozie is not initialized");
         }
         ParamChecker.notEmpty(user, "user");
-        CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorXEngine(user,
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(user,
                 "undef");
         return new LocalOozieClientCoord(coordEngine);
     }

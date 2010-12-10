@@ -17,7 +17,7 @@ package org.apache.oozie.action.oozie;
 import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.DagEngineService;
@@ -75,7 +75,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             String user = workflow.getUser();
             String group = workflow.getGroup();
             String authToken = workflow.getAuthToken();
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(user, authToken);
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, authToken);
             oozieClient = new LocalOozieClient(dagEngine);
         }
         else {

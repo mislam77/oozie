@@ -21,13 +21,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.CoordinatorXEngine;
+import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorEngineException;
 import org.apache.oozie.BundleEngineException;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
@@ -156,7 +156,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
             String id = dagEngine.submitJob(conf, startJob);
             json.put(JsonTags.JOB_ID, id);
         }
@@ -183,7 +183,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorXEngine(
+            CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                     user, getAuthToken(request));
             String id = null;
             boolean dryrun = false;
@@ -249,7 +249,7 @@ public class V1JobsServlet extends BaseJobsServlet {
     throws XServletException {
         JSONObject json = new JSONObject();
         try {
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                     getAuthToken(request));
             String jobId = dagEngine.getJobIdForExternalId(externalId);
             json.put(JsonTags.JOB_ID, jobId);
@@ -284,7 +284,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                     getAuthToken(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
@@ -316,7 +316,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
-            CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorXEngine(
+            CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                     getUser(request), getAuthToken(request));
             CoordinatorJobInfo jobs = coordEngine.getCoordJobs(filter, start, len);
             List<CoordinatorJobBean> jsonJobs = jobs.getCoordJobs();
@@ -340,7 +340,7 @@ public class V1JobsServlet extends BaseJobsServlet {
 
         try {
             String user = conf.get(OozieClient.USER_NAME);
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
             String id = dagEngine.submitHttpJob(conf, jobType);
             json.put(JsonTags.JOB_ID, id);
         }

@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
@@ -99,7 +99,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 assertEquals(MockDagEngineService.JOB_ID + wfCount, obj.get(JsonTags.JOB_ID));
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 Services services = Services.get();
-                DagXEngine de = services.get(DagEngineService.class).getDagXEngine(getTestUser(), "undef");
+                DagEngine de = services.get(DagEngineService.class).getDagEngine(getTestUser(), "undef");
                 StringReader sr = new StringReader(de.getJob(MockDagEngineService.JOB_ID + wfCount).getConf());
                 Configuration conf1 = new XConfiguration(sr);
                 assertEquals(AuthorizationService.DEFAULT_GROUP, conf1.get(OozieClient.GROUP_NAME));

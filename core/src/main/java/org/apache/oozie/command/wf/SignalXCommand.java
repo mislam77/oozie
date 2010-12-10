@@ -171,7 +171,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 actionToKill.setPending();
                 actionToKill.setStatus(WorkflowActionBean.Status.KILLED);
                 jpaService.execute(new WorkflowActionUpdateCommand(actionToKill));
-                queue(new WorkflowActionKillXCommand(actionToKill.getId(), actionToKill.getType()));
+                queue(new ActionKillXCommand(actionToKill.getId(), actionToKill.getType()));
             }
 
             for (String actionToFailId : WorkflowStoreService.getActionsToFail(workflowInstance)) {

@@ -36,6 +36,7 @@ import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.Instrumentation;
@@ -49,7 +50,7 @@ import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
  * Base class for Action execution commands. Provides common functionality to
  * handle different types of errors while attempting to start or end an action.
  */
-public abstract class WorkflowActionXCommand<T> extends WorkflowXCommand<Void> {
+public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
 
     protected static final String INSTR_FAILED_JOBS_COUNTER = "failed";
@@ -58,7 +59,7 @@ public abstract class WorkflowActionXCommand<T> extends WorkflowXCommand<Void> {
 
     private final XLog LOG = XLog.getLog(getClass());
 
-    public WorkflowActionXCommand(String name, String type, int priority) {
+    public ActionXCommand(String name, String type, int priority) {
         super(name, type, priority);
     }
 
@@ -122,7 +123,7 @@ public abstract class WorkflowActionXCommand<T> extends WorkflowXCommand<Void> {
         action.resetPendingOnly();
         LOG.warn("Suspending Workflow Job id=" + id);
         try {
-            new SuspendXCommand(id).call();
+            SuspendXCommand.suspendJob(Services.get().get(JPAService.class), workflow, id, action.getId());
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0727,e.getMessage());
@@ -180,7 +181,7 @@ public abstract class WorkflowActionXCommand<T> extends WorkflowXCommand<Void> {
             action.setStatus(WorkflowAction.Status.FAILED);
             action.resetPending();
             queue(new NotificationXCommand(workflow, action));
-            queue(new WorkflowKillXCommand(workflow.getId()));
+            queue(new KillXCommand(workflow.getId()));
             incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1);
         }
         catch (WorkflowException ex) {

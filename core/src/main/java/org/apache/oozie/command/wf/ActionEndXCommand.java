@@ -44,7 +44,7 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.db.SLADbXOperations;
 import org.apache.oozie.workflow.WorkflowInstance;
 
-public class ActionEndXCommand extends WorkflowActionXCommand<Void> {
+public class ActionEndXCommand extends ActionXCommand<Void> {
     public static final String COULD_NOT_END = "COULD_NOT_END";
     public static final String END_DATA_MISSING = "END_DATA_MISSING";
 
@@ -132,7 +132,7 @@ public class ActionEndXCommand extends WorkflowActionXCommand<Void> {
                 || wfAction.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
             isRetry = true;
         }
-        ActionExecutorContext context = new WorkflowActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry);
+        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry);
         try {
 
             LOG.debug(

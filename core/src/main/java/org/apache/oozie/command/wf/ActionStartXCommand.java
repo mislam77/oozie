@@ -48,7 +48,7 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
 
-public class ActionStartXCommand extends WorkflowActionXCommand<Void> {
+public class ActionStartXCommand extends ActionXCommand<Void> {
     public static final String EL_ERROR = "EL_ERROR";
     public static final String EL_EVAL_ERROR = "EL_EVAL_ERROR";
     public static final String COULD_NOT_START = "COULD_NOT_START";
@@ -141,7 +141,7 @@ public class ActionStartXCommand extends WorkflowActionXCommand<Void> {
                     || wfAction.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
                 isRetry = true;
             }
-            context = new WorkflowActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry);
+            context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry);
             try {
                 String tmpActionConf = XmlUtils.removeComments(wfAction.getConf());
                 String actionConf = context.getELEvaluator().evaluate(tmpActionConf, String.class);

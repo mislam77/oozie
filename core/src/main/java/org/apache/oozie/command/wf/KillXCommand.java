@@ -43,7 +43,7 @@ import java.util.List;
  * Kill workflow job and its workflow instance and queue a
  * {@link WorkflowActionKillXCommand} to kill the workflow actions.
  */
-public class WorkflowKillXCommand extends WorkflowXCommand<Void> {
+public class KillXCommand extends WorkflowXCommand<Void> {
 
     private String wfId;
     private final XLog LOG = XLog.getLog(getClass());
@@ -51,7 +51,7 @@ public class WorkflowKillXCommand extends WorkflowXCommand<Void> {
     private List<WorkflowActionBean> actionList;
     private JPAService jpaService = null;
 
-    public WorkflowKillXCommand(String wfId) {
+    public KillXCommand(String wfId) {
         super("kill", "kill", 1);
         this.wfId = ParamChecker.notEmpty(wfId, "wfId");
     }
@@ -120,7 +120,7 @@ public class WorkflowKillXCommand extends WorkflowXCommand<Void> {
                 action.setPending();
                 action.setStatus(WorkflowActionBean.Status.KILLED);
 
-                queue(new WorkflowActionKillXCommand(action.getId(), action.getType()));
+                queue(new ActionKillXCommand(action.getId(), action.getType()));
             }
             if (action.getStatus() == WorkflowActionBean.Status.PREP
                     || action.getStatus() == WorkflowActionBean.Status.START_RETRY

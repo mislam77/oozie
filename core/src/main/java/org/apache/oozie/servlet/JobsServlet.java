@@ -23,7 +23,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.DagEngineException;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
@@ -86,7 +86,7 @@ public class JobsServlet extends JsonRestServlet {
         try {
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
             String id = dagEngine.submitJob(conf, startJob);
             JSONObject json = new JSONObject();
             json.put(JsonTags.JOB_ID, id);
@@ -124,8 +124,8 @@ public class JobsServlet extends JsonRestServlet {
             String externalId = request.getParameter(RestConstants.JOBS_EXTERNAL_ID_PARAM);
             if (externalId != null) {
                 stopCron();
-                DagXEngine dagEngine = Services.get().get(DagEngineService.class)
-                        .getDagXEngine(getUser(request), getAuthToken(request));
+                DagEngine dagEngine = Services.get().get(DagEngineService.class)
+                        .getDagEngine(getUser(request), getAuthToken(request));
                 String jobId = dagEngine.getJobIdForExternalId(externalId);
                 JSONObject json = new JSONObject();
                 json.put(JsonTags.JOB_ID, jobId);
@@ -141,8 +141,8 @@ public class JobsServlet extends JsonRestServlet {
                 int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
                 len = (len < 1) ? 50 : len;
                 stopCron();
-                DagXEngine dagEngine = Services.get().get(DagEngineService.class)
-                        .getDagXEngine(getUser(request), getAuthToken(request));
+                DagEngine dagEngine = Services.get().get(DagEngineService.class)
+                        .getDagEngine(getUser(request), getAuthToken(request));
                 WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
                 List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
                 startCron();

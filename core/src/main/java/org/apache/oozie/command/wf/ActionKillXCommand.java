@@ -40,7 +40,7 @@ import org.apache.oozie.util.db.SLADbXOperations;
  * Kill workflow action and invoke action executor to kill the underlying context.
  *
  */
-public class WorkflowActionKillXCommand extends WorkflowActionXCommand<Void> {
+public class ActionKillXCommand extends ActionXCommand<Void> {
     private String actionId;
     private String jobId;
     private WorkflowJobBean wfJob;
@@ -48,13 +48,13 @@ public class WorkflowActionKillXCommand extends WorkflowActionXCommand<Void> {
     private final XLog LOG = XLog.getLog(getClass());
     private JPAService jpaService = null;
 
-    public WorkflowActionKillXCommand(String actionId, String type) {
+    public ActionKillXCommand(String actionId, String type) {
         super("action.kill", type, 0);
         this.actionId = actionId;
         this.jobId = Services.get().get(UUIDService.class).getId(actionId);
     }
 
-    public WorkflowActionKillXCommand(String actionId) {
+    public ActionKillXCommand(String actionId) {
         this(actionId, "action.kill");
     }
 
@@ -103,7 +103,7 @@ public class WorkflowActionKillXCommand extends WorkflowActionXCommand<Void> {
         if (executor != null) {
             try {
                 boolean isRetry = false;
-                ActionExecutorContext context = new WorkflowActionXCommand.ActionExecutorContext(wfJob, wfAction,
+                ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction,
                         isRetry);
                 incrActionCounter(wfAction.getType(), 1);
 

@@ -23,7 +23,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagEngineException;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.WorkflowJob;
@@ -67,16 +67,16 @@ public class MockDagEngineService extends DagEngineService {
     }
 
     @Override
-    public DagXEngine getSystemDagXEngine() {
+    public DagEngine getSystemDagEngine() {
         return new MockDagEngine();
     }
 
     @Override
-    public DagXEngine getDagXEngine(String user, String authToken) {
+    public DagEngine getDagEngine(String user, String authToken) {
         return new MockDagEngine(user, authToken);
     }
 
-    private static class MockDagEngine extends DagXEngine {
+    private static class MockDagEngine extends DagEngine {
 
         public MockDagEngine() {
         }

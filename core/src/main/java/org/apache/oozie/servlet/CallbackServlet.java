@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.CallbackService;
@@ -84,7 +84,7 @@ public class CallbackServlet extends JsonRestServlet {
         log = XLog.getLog(getClass());
         log.debug("Received a CallbackServlet.doGet() with query string " + queryString);
 
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagXEngine();
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagEngine();
         try {
             log.info(XLog.STD, "callback for action [{0}]", actionId);
             dagEngine.processCallback(actionId, callbackService.getExternalStatus(queryString), null);
@@ -128,7 +128,7 @@ public class CallbackServlet extends JsonRestServlet {
             log.info(XLog.STD, "callback for action [{0}]", actionId);
             String data = IOUtils.getReaderAsString(request.getReader(), maxDataLen);
             Properties props = PropertiesUtils.stringToProperties(data);
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagXEngine();
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagEngine();
             dagEngine.processCallback(actionId, callbackService.getExternalStatus(queryString), props);
         }
         catch (IOException ex) {

@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagEngineException;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
@@ -57,7 +57,7 @@ public class V0JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
             String id = dagEngine.submitJob(conf, startJob);
             json.put(JsonTags.JOB_ID, id);
         }
@@ -75,8 +75,8 @@ public class V0JobsServlet extends BaseJobsServlet {
     protected JSONObject getJobIdForExternalId(HttpServletRequest request, String externalId) throws XServletException, IOException {
         JSONObject json = new JSONObject();
         try {
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class)
-            .getDagXEngine(getUser(request), getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class)
+            .getDagEngine(getUser(request), getAuthToken(request));
             String jobId = dagEngine.getJobIdForExternalId(externalId);
             json.put(JsonTags.JOB_ID, jobId);
         }
@@ -101,8 +101,8 @@ public class V0JobsServlet extends BaseJobsServlet {
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
-            DagXEngine dagEngine = Services.get().get(DagEngineService.class)
-            .getDagXEngine(getUser(request), getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class)
+            .getDagEngine(getUser(request), getAuthToken(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
             json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows));

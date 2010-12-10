@@ -65,7 +65,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
         assertEquals(action.getExternalStatus(), "RUNNING");
 
-        new WorkflowActionKillXCommand(action.getId()).call();
+        new ActionKillXCommand(action.getId()).call();
 
         action = jpaService.execute(wfActionGetCmd);
         assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
@@ -91,7 +91,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         assertEquals(action.getStatus(), WorkflowAction.Status.RUNNING);
         assertEquals(action.getExternalStatus(), "RUNNING");
 
-        new WorkflowActionKillXCommand(action.getId()).call();
+        new ActionKillXCommand(action.getId()).call();
 
         // action is not in KILLED, action status must not change
         action = jpaService.execute(wfActionGetCmd);

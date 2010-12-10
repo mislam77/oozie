@@ -36,7 +36,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.jpa.WorkflowActionGetCommand;
 import org.apache.oozie.command.jpa.WorkflowActionInsertCommand;
-import org.apache.oozie.command.wf.WorkflowActionXCommand.ActionExecutorContext;
+import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
@@ -154,7 +154,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         new ActionStartXCommand(action.getId(), "map-reduce").call();
         action = jpaService.execute(wfActionGetCmd);
 
-        ActionExecutorContext context = new WorkflowActionXCommand.ActionExecutorContext(job, action, false);
+        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
         Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");

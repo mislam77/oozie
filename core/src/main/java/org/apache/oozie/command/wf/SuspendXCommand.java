@@ -76,7 +76,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @throws CommandException
      * @throws StoreException
      */
-    private void suspendJob(JPAService jpaService, WorkflowJobBean workflow, String id, String actionId)
+    public static void suspendJob(JPAService jpaService, WorkflowJobBean workflow, String id, String actionId)
     throws WorkflowException, CommandException {
         if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
             workflow.getWorkflowInstance().suspend();
@@ -99,7 +99,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @throws CommandException
      * @throws StoreException
      */
-    private void setPendingFalseForActions(JPAService jpaService, String id, String actionId)
+    private static void setPendingFalseForActions(JPAService jpaService, String id, String actionId)
     throws CommandException {
         List<WorkflowActionBean> actions = jpaService.execute(new WorkflowActionRetryManualGetCommand(id));
         for (WorkflowActionBean action : actions) {

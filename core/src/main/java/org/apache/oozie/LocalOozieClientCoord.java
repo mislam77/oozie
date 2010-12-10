@@ -54,7 +54,7 @@ import org.apache.oozie.util.XConfiguration;
  */
 public class LocalOozieClientCoord extends OozieClient {
 
-    private final CoordinatorXEngine coordEngine;
+    private final CoordinatorEngine coordEngine;
 
     /**
      * Create a coordinator client for Oozie local use.
@@ -62,7 +62,7 @@ public class LocalOozieClientCoord extends OozieClient {
      *
      * @param coordEngine the engine instance to use.
      */
-    public LocalOozieClientCoord(CoordinatorXEngine coordEngine) {
+    public LocalOozieClientCoord(CoordinatorEngine coordEngine) {
         this.coordEngine = coordEngine;
     }
 

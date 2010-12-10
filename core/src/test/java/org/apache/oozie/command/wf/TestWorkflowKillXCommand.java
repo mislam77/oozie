@@ -66,7 +66,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         WorkflowInstance wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
 
-        new WorkflowKillXCommand(job.getId()).call();
+        new KillXCommand(job.getId()).call();
 
         job = jpaService.execute(wfJobGetCmd);
         action = jpaService.execute(wfActionGetCmd);
@@ -99,7 +99,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         WorkflowInstance wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
 
-        new WorkflowKillXCommand(job.getId()).call();
+        new KillXCommand(job.getId()).call();
 
         job = jpaService.execute(wfJobGetCmd);
         action = jpaService.execute(wfActionGetCmd);
@@ -133,7 +133,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
 
         try {
-            new WorkflowKillXCommand(testWfId).call();
+            new KillXCommand(testWfId).call();
             fail("Job doesn't exist. Should fail.");
         } catch (CommandException ce) {
         }

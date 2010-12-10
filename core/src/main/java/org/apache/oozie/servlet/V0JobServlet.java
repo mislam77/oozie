@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagEngineException;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -43,7 +43,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected void startJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         String jobId = getResourceName(request);
@@ -61,7 +61,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected void resumeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         String jobId = getResourceName(request);
@@ -79,7 +79,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected void suspendJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         String jobId = getResourceName(request);
@@ -97,7 +97,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected void killJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         String jobId = getResourceName(request);
@@ -125,7 +125,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected JSONObject reRunJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException, IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         String jobId = getResourceName(request);
@@ -144,7 +144,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected JsonBean getJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         JsonBean jobBean = null;
@@ -165,7 +165,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected String getJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         String wfDefinition = null;
@@ -185,7 +185,7 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected void streamJobLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
 
         String jobId = getResourceName(request);

@@ -63,7 +63,12 @@ public class WorkflowInfoWithActionsSubsetGetCommand implements JPACommand<Workf
             }
         }
         catch (Exception ex) {
-            throw new CommandException(ErrorCode.E0603, ex);
+            if (ex instanceof CommandException) {
+                throw (CommandException) ex;
+            }
+            else {
+                throw new CommandException(ErrorCode.E0603, ex);
+            }
         }
 
         if (this.workflow != null) {

@@ -26,9 +26,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
-import org.apache.oozie.CoordinatorXEngine;
+import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.DagEngineException;
-import org.apache.oozie.DagXEngine;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
@@ -76,9 +76,9 @@ public class JobServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
         }
 
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
-        CoordinatorXEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorXEngine(
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                 getUser(request), getAuthToken(request));
         try {
             String action = request.getParameter(RestConstants.ACTION_PARAM);
@@ -196,7 +196,7 @@ public class JobServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
         }
 
-        DagXEngine dagEngine = Services.get().get(DagEngineService.class).getDagXEngine(getUser(request),
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
         try {
             if (show == null || show.equals(RestConstants.JOB_SHOW_INFO)) {
