@@ -16,6 +16,7 @@ package org.apache.oozie;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.BundleJob;
@@ -23,9 +24,14 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.bundle.BundleJobXCommand;
+import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
+import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLogStreamer;
 
 public class BundleEngine extends BaseEngine {
     /**
@@ -49,8 +55,8 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
      */
     @Override
-    public void change(String jobId, String changeValue) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+    public void change(String jobId, String changeValue) throws BundleEngineException {
+        throw new BundleEngineException(new XException(ErrorCode.E0301));
     }
 
     /* (non-Javadoc)
@@ -72,16 +78,16 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String)
      */
     @Override
-    public CoordinatorJob getCoordJob(String jobId) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+    public CoordinatorJob getCoordJob(String jobId) throws BundleEngineException {
+        throw new BundleEngineException(new XException(ErrorCode.E0301));
     }
-        
-    public BundleJob getBundleJob(String jobId) throws BaseEngineException {
+
+    public BundleJob getBundleJob(String jobId) throws BundleEngineException {
         try {
             return new BundleJobXCommand(jobId).call();
         }
         catch (CommandException ex) {
-            throw new BaseEngineException(ex);
+            throw new BundleEngineException(ex);
         }
     }
 
@@ -89,40 +95,46 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
      */
     @Override
-    public CoordinatorJob getCoordJob(String jobId, int start, int length) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+    public CoordinatorJob getCoordJob(String jobId, int start, int length) throws BundleEngineException {
+        throw new BundleEngineException(new XException(ErrorCode.E0301));
     }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.BaseEngine#getDefinition(java.lang.String)
      */
     @Override
-    public String getDefinition(String jobId) throws BaseEngineException {
-        // TODO Auto-generated method stub
-        return null;
+    public String getDefinition(String jobId) throws BundleEngineException {
+        BundleJobBean job;
+        try {
+            job = new BundleJobXCommand(jobId).call();
+        }
+        catch (CommandException ex) {
+            throw new BundleEngineException(ex);
+        }
+        return job.getOrigJobXml();
     }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.BaseEngine#getJob(java.lang.String)
      */
     @Override
-    public WorkflowJob getJob(String jobId) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+    public WorkflowJob getJob(String jobId) throws BundleEngineException {
+        throw new BundleEngineException(new XException(ErrorCode.E0301));
     }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.BaseEngine#getJob(java.lang.String, int, int)
      */
     @Override
-    public WorkflowJob getJob(String jobId, int start, int length) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+    public WorkflowJob getJob(String jobId, int start, int length) throws BundleEngineException {
+        throw new BundleEngineException(new XException(ErrorCode.E0301));
     }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.BaseEngine#getJobIdForExternalId(java.lang.String)
      */
     @Override
-    public String getJobIdForExternalId(String externalId) throws BaseEngineException {
+    public String getJobIdForExternalId(String externalId) throws BundleEngineException {
         return null;
     }
 
@@ -130,26 +142,27 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#kill(java.lang.String)
      */
     @Override
-    public void kill(String jobId) throws BaseEngineException {
-        // TODO Auto-generated method stub
+    public void kill(String jobId) throws BundleEngineException {
+        try {
+            new BundleKillXCommand(jobId).call();
+        }
+        catch (CommandException e) {
+            throw new BundleEngineException(e);
+        }
     }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.BaseEngine#reRun(java.lang.String, org.apache.hadoop.conf.Configuration)
      */
     @Override
-    public void reRun(String jobId, Configuration conf) throws BaseEngineException {
-        // TODO Auto-generated method stub
-
+    public void reRun(String jobId, Configuration conf) throws BundleEngineException {
     }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.BaseEngine#resume(java.lang.String)
      */
     @Override
-    public void resume(String jobId) throws BaseEngineException {
-        // TODO Auto-generated method stub
-
+    public void resume(String jobId) throws BundleEngineException {
     }
 
     /* (non-Javadoc)
@@ -169,9 +182,19 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#streamLog(java.lang.String, java.io.Writer)
      */
     @Override
-    public void streamLog(String jobId, Writer writer) throws IOException, BaseEngineException {
-        // TODO Auto-generated method stub
+    public void streamLog(String jobId, Writer writer) throws IOException, BundleEngineException {
+        XLogStreamer.Filter filter = new XLogStreamer.Filter();
+        filter.setParameter(DagXLogInfoService.JOB, jobId);
 
+        BundleJobBean job;
+        try {
+            job = new BundleJobXCommand(jobId).call();
+        }
+        catch (CommandException ex) {
+            throw new BundleEngineException(ex);
+        }
+
+        Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
     }
 
     /* (non-Javadoc)
@@ -179,9 +202,8 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws BundleEngineException {
-        BundleSubmitXCommand submit = new BundleSubmitXCommand(conf, getAuthToken());
         try {
-            String jobId = submit.call();
+            String jobId = new BundleSubmitXCommand(conf, getAuthToken()).call();
             return jobId;
         }
         catch (CommandException ex) {
@@ -193,7 +215,6 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#suspend(java.lang.String)
      */
     @Override
-    public void suspend(String jobId) throws BaseEngineException {
-        // TODO Auto-generated method stub
+    public void suspend(String jobId) throws BundleEngineException {
     }
 }

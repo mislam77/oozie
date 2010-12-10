@@ -194,6 +194,14 @@ import org.apache.openjpa.persistence.jdbc.Index;
         return createdTimestamp;
     }
 
+
+    /**
+     * @return the createdTime
+     */
+    public Date getCreatedTime() {
+        return DateUtils.toDate(createdTimestamp);
+    }
+
     /**
      * @return the timeUnitStr
      */

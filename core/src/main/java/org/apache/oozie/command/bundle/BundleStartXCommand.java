@@ -16,6 +16,7 @@ package org.apache.oozie.command.bundle;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,6 +180,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         action.setBundleId(jobId);
         action.setCoordName(coordName);
         action.setStatus(Job.Status.PREP);
+        action.setLastModifiedTime(new Date());
         if (isCritical) {
             action.setCritical();
         }
@@ -221,6 +223,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     private void updateBundleAction(String coordName) throws CommandException {
         BundleActionBean action = jpaService.execute(new BundleActionGetCommand(jobId, coordName));
         action.incrementAndGetPending();
+        action.setLastModifiedTime(new Date());
         jpaService.execute(new BundleActionUpdateCommand(action));
     }
 

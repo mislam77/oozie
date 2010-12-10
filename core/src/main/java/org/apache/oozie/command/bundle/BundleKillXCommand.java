@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.command.bundle;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.BundleActionBean;
@@ -117,6 +118,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      */
     private void updateBundleAction(BundleActionBean action) throws CommandException {
         action.incrementAndGetPending();
+        action.setLastModifiedTime(new Date());
         jpaService.execute(new BundleActionUpdateCommand(action));
     }
 

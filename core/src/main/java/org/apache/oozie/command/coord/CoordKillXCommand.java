@@ -19,6 +19,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.jpa.CoordActionsGetForJobCommand;
 import org.apache.oozie.command.jpa.CoordJobGetCommand;
 import org.apache.oozie.command.jpa.CoordJobUpdateCommand;
@@ -84,22 +85,31 @@ public class CoordKillXCommand extends CoordinatorXCommand<Void> {
     protected Void execute() throws CommandException {
         LOG.info("STARTED CoordKillXCommand for jobId=" + jobId);
         incrJobCounter(1);
-        coordJob.setEndTime(new Date());
-        coordJob.setStatus(CoordinatorJob.Status.KILLED);
-        for (CoordinatorActionBean action : actionList) {
-            if (action.getStatus() != CoordinatorActionBean.Status.FAILED
-                    && action.getStatus() != CoordinatorActionBean.Status.TIMEDOUT
-                    && action.getStatus() != CoordinatorActionBean.Status.SUCCEEDED
-                    && action.getStatus() != CoordinatorActionBean.Status.KILLED) {
-                // queue a WorkflowKillXCommand to delete the workflow job and actions
-                if (action.getExternalId() != null) {
-                    queue(new WorkflowKillXCommand(action.getExternalId()));
+        CoordinatorJob.Status prevStatus = coordJob.getStatus();
+        try {
+            coordJob.setEndTime(new Date());
+            coordJob.setStatus(CoordinatorJob.Status.KILLED);
+            for (CoordinatorActionBean action : actionList) {
+                if (action.getStatus() != CoordinatorActionBean.Status.FAILED
+                        && action.getStatus() != CoordinatorActionBean.Status.TIMEDOUT
+                        && action.getStatus() != CoordinatorActionBean.Status.SUCCEEDED
+                        && action.getStatus() != CoordinatorActionBean.Status.KILLED) {
+                    // queue a WorkflowKillXCommand to delete the workflow job and actions
+                    if (action.getExternalId() != null) {
+                        queue(new WorkflowKillXCommand(action.getExternalId()));
+                    }
+                    action.setStatus(CoordinatorActionBean.Status.KILLED);
+                    jpaService.execute(new CoordActionUpdateCommand(action));
                 }
-                action.setStatus(CoordinatorActionBean.Status.KILLED);
-                jpaService.execute(new CoordActionUpdateCommand(action));
+            }
+            jpaService.execute(new CoordJobUpdateCommand(coordJob));
+        } finally {
+            //update bundle action
+            if (coordJob.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                bundleStatusUpdate.call();
             }
         }
-        jpaService.execute(new CoordJobUpdateCommand(coordJob));
         LOG.info("ENDED CoordKillXCommand for jobId=" + jobId);
         return null;
     }
