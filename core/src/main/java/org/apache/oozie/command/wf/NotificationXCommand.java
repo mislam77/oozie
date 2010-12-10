@@ -19,6 +19,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.net.URL;
 
 public class NotificationXCommand extends WorkflowXCommand<Void> {
 
+    private static XLog LOG = XLog.getLog(NotificationXCommand.class);
     private static final String STATUS_PATTERN = "\\$status";
     private static final String JOB_ID_PATTERN = "\\$jobId";
     private static final String NODE_NAME_PATTERN = "\\$nodeName";
@@ -36,6 +38,8 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
 
     public NotificationXCommand(WorkflowJobBean workflow) {
         super("job.notification", "job.notification", 0);
+        ParamChecker.notNull(workflow, "workflow");
+        setLogInfo(workflow);
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL);
         if (url != null) {
             url = url.replaceAll(JOB_ID_PATTERN, workflow.getId());
@@ -45,6 +49,10 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
 
     public NotificationXCommand(WorkflowJobBean workflow, WorkflowActionBean action) {
         super("action.notification", "job.notification", 0);
+        ParamChecker.notNull(workflow, "workflow");
+        ParamChecker.notNull(action, "action");
+        setLogInfo(workflow);
+        setLogInfo(action);
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL);
         if (url != null) {
             url = url.replaceAll(JOB_ID_PATTERN, workflow.getId());
@@ -96,10 +104,11 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
     private void handleRetry() {
         if (retries < 3) {
             retries++;
+            this.resetUsed();
             queue(this, 60 * 1000);
         }
         else {
-            XLog.getLog(getClass()).warn(XLog.OPS, "could not send notification [{0}]", url);
+            LOG.warn(XLog.OPS, "could not send notification [{0}]", url);
         }
     }
 

@@ -31,41 +31,37 @@ import org.apache.oozie.util.XLog;
 
 public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
 
+    private static XLog LOG = XLog.getLog(CoordActionNotificationXCommand.class);
     private CoordinatorActionBean actionBean;
     private static final String STATUS_PATTERN = "\\$status";
     private static final String ACTION_ID_PATTERN = "\\$actionId";
 
     private int retries = 0;
-    private static XLog log = XLog.getLog(CoordActionNotificationXCommand.class);
 
-	public CoordActionNotificationXCommand(CoordinatorActionBean actionBean) {
-		super("coord_action_notification", "coord_action_notification", 0);
-		this.actionBean = actionBean;
-	}
+    public CoordActionNotificationXCommand(CoordinatorActionBean actionBean) {
+        super("coord_action_notification", "coord_action_notification", 0);
+        this.actionBean = actionBean;
+    }
 
     @Override
     protected Void execute() throws CommandException {
-        log.info("STARTED Coordinator Notification actionId="
-                + actionBean.getId() + " : " + actionBean.getStatus());
+        LOG.info("STARTED Coordinator Notification actionId=" + actionBean.getId() + " : " + actionBean.getStatus());
         Configuration conf;
         try {
             conf = new XConfiguration(new StringReader(actionBean.getRunConf()));
         }
         catch (IOException e1) {
-            log.warn("Configuration parse error. read from DB :"
-                    + actionBean.getRunConf());
+            LOG.warn("Configuration parse error. read from DB :" + actionBean.getRunConf());
             throw new CommandException(ErrorCode.E1005, e1.getMessage(), e1);
         }
         String url = conf.get(OozieClient.COORD_ACTION_NOTIFICATION_URL);
         if (url != null) {
             url = url.replaceAll(ACTION_ID_PATTERN, actionBean.getId());
-            url = url.replaceAll(STATUS_PATTERN, actionBean.getStatus()
-                    .toString());
-            log.debug("Notification URL :" + url);
+            url = url.replaceAll(STATUS_PATTERN, actionBean.getStatus().toString());
+            LOG.debug("Notification URL :" + url);
             try {
                 URL urlObj = new URL(url);
-                HttpURLConnection urlConn = (HttpURLConnection) urlObj
-                        .openConnection();
+                HttpURLConnection urlConn = (HttpURLConnection) urlObj.openConnection();
                 if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     handleRetry(url);
                 }
@@ -75,26 +71,21 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
             }
         }
         else {
-            log
-                    .info("No Notification URL is defined. Therefore nothing to notify for job "
-                            + actionBean.getJobId()
-                            + " action ID "
-                            + actionBean.getId());
-            // System.out.println("No Notification URL is defined. Therefore nothing is notified");
+            LOG.info("No Notification URL is defined. Therefore nothing to notify for job " + actionBean.getJobId()
+                    + " action ID " + actionBean.getId());
         }
-        log.info("ENDED Coordinator Notification actionId="
-                + actionBean.getId());
+        LOG.info("ENDED Coordinator Notification actionId=" + actionBean.getId());
         return null;
     }
 
     private void handleRetry(String url) {
         if (retries < 3) {
             retries++;
+            this.resetUsed();
             queue(this, 60 * 1000);
         }
         else {
-            XLog.getLog(getClass()).warn(XLog.OPS,
-                                         "could not send notification [{0}]", url);
+            LOG.warn(XLog.OPS, "could not send notification [{0}]", url);
         }
     }
 
@@ -115,7 +106,7 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        
+
     }
 
 }

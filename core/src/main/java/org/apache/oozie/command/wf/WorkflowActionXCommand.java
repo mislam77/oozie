@@ -95,6 +95,7 @@ public abstract class WorkflowActionXCommand<T> extends WorkflowXCommand<Void> {
             action.setPendingAge(new Date(System.currentTimeMillis() + retryDelayMillis));
             LOG.info("Next Retry, Attempt Number [{0}] in [{1}] milliseconds",
                     actionRetryCount + 1, retryDelayMillis);
+            this.resetUsed();
             queue(this, retryDelayMillis);
             return true;
         }

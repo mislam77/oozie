@@ -67,7 +67,8 @@ public abstract class XCommand<T> implements XCallable<T> {
     private String type;
     private long createdTime;
     private MemoryLocks.LockToken lock;
-    private boolean used;
+    private boolean used = false;
+
     private Map<Long, List<XCommand<?>>> commandQueue;
     protected boolean dryrun = false;
     protected Instrumentation instrumentation;
@@ -222,7 +223,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     @Override
     public final T call() throws CommandException {
         if (used) {
-            throw new IllegalStateException("XCommand already used");
+            throw new IllegalStateException(this.getClass().getSimpleName() + " already used. ignore.");
         }
         used = true;
         Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
@@ -539,6 +540,13 @@ public abstract class XCommand<T> implements XCallable<T> {
      */
     protected Instrumentation getInstrumentation() {
         return instrumentation;
+    }
+
+    /**
+     * @param used set false to the used
+     */
+    public void resetUsed() {
+        this.used = false;
     }
 
 }
