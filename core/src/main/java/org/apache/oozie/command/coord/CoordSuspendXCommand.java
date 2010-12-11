@@ -24,6 +24,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.jpa.CoordActionsGetForJobCommand;
 import org.apache.oozie.command.jpa.CoordJobGetCommand;
 import org.apache.oozie.command.jpa.CoordJobUpdateCommand;
@@ -38,6 +39,8 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
     private final XLog log = XLog.getLog(getClass());
     private CoordinatorJobBean coordJobBean;
     private JPAService jpaService;
+    private boolean exceptionOccured=false;
+    CoordinatorJob.Status prevStatus;
 
     /**
      * @param id
@@ -69,7 +72,18 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
             return null;
         }
         catch (XException ex) {
+            exceptionOccured = true;
             throw new CommandException(ex);
+        }
+        finally {
+            if (exceptionOccured) {
+                coordJobBean.setStatus(CoordinatorJob.Status.FAILED);
+            }
+            //update bundle action
+            if (this.coordJobBean.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJobBean, prevStatus);
+                bundleStatusUpdate.call();
+            }
         }
     }
 
@@ -83,6 +97,7 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
                 this.coordJobBean = jpaService.execute(new CoordJobGetCommand(this.jobId));
+                prevStatus = coordJobBean.getStatus();
             }
             else {
                 throw new CommandException(ErrorCode.E0610);

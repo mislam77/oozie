@@ -128,6 +128,16 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+        if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0) {
+            // Previous status are not matched with bundle action status
+            // So that's the error and we should not be updating the Bundle Action status
+            // however we need to decrement the pending flag.
+            if (bundleaction.isPending()) {
+                bundleaction.decrementAndGetPending();
+            }
+            jpaService.execute(new BundleActionUpdateCommand(bundleaction));
+            throw new PreconditionException(ErrorCode.E1308, bundleaction.getStatusStr(), prevStatus.toString());
+        }
     }
 
     /* (non-Javadoc)
@@ -157,13 +167,6 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
-        super.eagerVerifyPrecondition();
-        if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0) {
-            // Previous status are not matched with bundle action status
-            // So that's the error and we should no be updating the Bundle Action
-            throw new PreconditionException(ErrorCode.E1308, bundleaction.getStatusStr(), prevStatus.toString());
-        }
-
     }
 
     /**

@@ -74,12 +74,17 @@ public class BundleJobSuspendXCommand extends TransitionXCommand<Void>{
     protected Void execute() throws CommandException {
         try {
             incrJobCounter(1);
-            bundleJob.setStatus(Job.Status.SUSPENDED);
+            if(bundleJob.getStatus() == Job.Status.PREP){
+                bundleJob.setStatus(Job.Status.PREPSUSPENDED);
+            }
+            else if(bundleJob.getStatus() == Job.Status.RUNNING){
+                bundleJob.setStatus(Job.Status.SUSPENDED);
+            }
             bundleJob.setPending();
             bundleJob.setSuspendedTime(new Date());
 
             for (BundleActionBean action : this.bundleActions) {
-                if (action.getStatus() == Job.Status.RUNNING) {
+                if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP) {
                     // queue a SuspendCommand
                     if (action.getCoordId() != null) {
                         queue(new CoordSuspendXCommand(action.getCoordId()));

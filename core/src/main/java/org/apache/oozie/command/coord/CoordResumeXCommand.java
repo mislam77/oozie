@@ -14,30 +14,32 @@
  */
 package org.apache.oozie.command.coord;
 
-import org.apache.oozie.client.CoordinatorJob;
+import java.util.List;
+
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
+import org.apache.oozie.command.jpa.CoordJobGetActionsCommand;
+import org.apache.oozie.command.jpa.CoordJobGetCommand;
+import org.apache.oozie.command.jpa.CoordJobUpdateCommand;
+import org.apache.oozie.command.wf.ResumeXCommand;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
-import org.apache.oozie.command.jpa.CoordJobGetCommand;
-import org.apache.oozie.command.jpa.CoordJobUpdateCommand;
-import org.apache.oozie.command.jpa.CoordJobGetActionsCommand;
-import org.apache.oozie.command.wf.ResumeXCommand;
-
-import java.util.List;
-
 public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
-    private String jobId;
+    private final String jobId;
     private final static XLog log = XLog.getLog(CoordResumeXCommand.class);
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
+    private boolean exceptionOccured = false;
+    CoordinatorJob.Status prevStatus;
 
     public CoordResumeXCommand(String id) {
         super("coord_resume", "coord_resume", 1);
@@ -46,12 +48,12 @@ public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
-        try {            
+        try {
             incrJobCounter(1);
             coordJob.setStatus(CoordinatorJob.Status.PREP);
-            
+
             List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsCommand(jobId));
-            
+
             for (CoordinatorActionBean action : actionList) {
                 // queue a ResumeCommand
                 if (action.getExternalId() != null) {
@@ -63,7 +65,18 @@ public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
             return null;
         }
         catch (XException ex) {
+            exceptionOccured = true;
             throw new CommandException(ex);
+        }
+        finally {
+            if (exceptionOccured) {
+                coordJob.setStatus(CoordinatorJob.Status.FAILED);
+            }
+            //update bundle action
+            if (this.coordJob.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                bundleStatusUpdate.call();
+            }
         }
     }
 
@@ -84,6 +97,7 @@ public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
             throw new CommandException(ErrorCode.E0610);
         }
         coordJob = jpaService.execute(new CoordJobGetCommand(jobId));
+        prevStatus = coordJob.getStatus();
         setLogInfo(coordJob);
     }
 
