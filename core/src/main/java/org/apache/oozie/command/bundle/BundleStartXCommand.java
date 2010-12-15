@@ -149,7 +149,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                             throw new CommandException(ErrorCode.E1304, name);
                         }
                         boolean isCritical = false;
-                        if (Boolean.parseBoolean(critical.getValue())) {
+                        if (critical != null && Boolean.parseBoolean(critical.getValue())) {
                             isCritical = true;
                         }
                         map.put(name.getValue(), isCritical);
