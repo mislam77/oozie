@@ -31,8 +31,8 @@ import org.apache.oozie.util.XLog;
 
 public class CoordJobMatLookupXCommand extends CoordinatorXCommand<Void> {
     private static final int LOOKAHEAD_WINDOW = 300; // We look ahead 5 minutes for materialization;
-    
-    private static final XLog log = XLog.getLog(CoordJobMatLookupXCommand.class);
+
+    private static final XLog LOG = XLog.getLog(CoordJobMatLookupXCommand.class);
     private int materializationWindow;
     private String jobId;
     private CoordinatorJobBean coordJob = null;
@@ -46,6 +46,8 @@ public class CoordJobMatLookupXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
+        LOG.debug("STARTED CoordJobMatLookupXCommand jobId=" + jobId + ", materializationWindow="
+                + materializationWindow);
         Timestamp startTime = coordJob.getNextMaterializedTimestamp();
         if (startTime == null) {
             startTime = coordJob.getStartTimestamp();
@@ -66,10 +68,12 @@ public class CoordJobMatLookupXCommand extends CoordinatorXCommand<Void> {
         coordJob.setLastModifiedTime(new Date());
         jpaService.execute(new CoordJobUpdateCommand(coordJob));
 
-        log.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.toDate(startTime) + ", end=" + DateUtils.toDate(endTime)
+        LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.toDate(startTime) + ", end=" + DateUtils.toDate(endTime)
                 + ", window=" + materializationWindow + ", status=PREMATER");
         queue(new CoordActionMaterializeXCommand(jobId, DateUtils.toDate(startTime), DateUtils.toDate(endTime)),
                 100);
+        LOG.debug("ENDED CoordJobMatLookupXCommand jobId=" + jobId + ", materializationWindow="
+                + materializationWindow);
         return null;
     }
 
@@ -113,7 +117,7 @@ public class CoordJobMatLookupXCommand extends CoordinatorXCommand<Void> {
         Timestamp startTime = coordJob.getNextMaterializedTimestamp();
         if (startTime == null) {
             startTime = coordJob.getStartTimestamp();
-            
+
             if (startTime.after(new Timestamp(System.currentTimeMillis() + LOOKAHEAD_WINDOW * 1000))) {
                 throw new PreconditionException(ErrorCode.E1100, "CoordJobMatLookupCommand for jobId=" + jobId + " job's start time is not reached yet - nothing to materialize");
             }

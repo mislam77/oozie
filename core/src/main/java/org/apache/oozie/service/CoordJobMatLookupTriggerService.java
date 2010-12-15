@@ -20,7 +20,7 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.command.coord.CoordJobMatLookupCommand;
+import org.apache.oozie.command.coord.CoordJobMatLookupXCommand;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.XCallable;
@@ -113,7 +113,7 @@ public class CoordJobMatLookupTriggerService implements Service {
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                                                                                 INSTR_MAT_JOBS_COUNTER, 1);
-                    queueCallable(new CoordJobMatLookupCommand(coordJob.getId(), materializationWindow));
+                    queueCallable(new CoordJobMatLookupXCommand(coordJob.getId(), materializationWindow));
                 }
 
                 store.commitTrx();
