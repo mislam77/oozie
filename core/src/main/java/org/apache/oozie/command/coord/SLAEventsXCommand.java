@@ -63,12 +63,14 @@ public class SLAEventsXCommand extends XCommand<List<SLAEventBean>> {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             List<SLAEventBean> slaEventList = null;
+            long lastSeqId[] = new long[1];
             if (jpaService != null) {
-                slaEventList = jpaService.execute(new SLAEventsGetForSeqIdCommand(seqId, maxNoEvents));
+                slaEventList = jpaService.execute(new SLAEventsGetForSeqIdCommand(seqId, maxNoEvents, lastSeqId));
             }
             else {
                 LOG.error(ErrorCode.E0610);
             }
+            setLastSeqId(lastSeqId[0]);
             return slaEventList;
         }
         catch (XException ex) {

@@ -23,7 +23,6 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Date;
-import java.util.Properties;
 import java.util.regex.Matcher;
 
 import org.apache.hadoop.conf.Configuration;
@@ -44,6 +43,7 @@ import org.apache.oozie.client.SLAEvent;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.jpa.BundleJobInsertCommand;
@@ -52,7 +52,6 @@ import org.apache.oozie.command.jpa.CoordJobInsertCommand;
 import org.apache.oozie.command.jpa.SLAEventInsertCommand;
 import org.apache.oozie.command.jpa.WorkflowActionInsertCommand;
 import org.apache.oozie.command.jpa.WorkflowJobInsertCommand;
-import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -123,19 +122,19 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setAppName("COORD-TEST");
         coordJob.setAppPath(appPath.toString());
         coordJob.setStatus(status);
+        coordJob.setTimeZone("America/Los_Angeles");
         coordJob.setCreatedTime(new Date());
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
         coordJob.setAuthToken("notoken");
 
-        Properties conf = getCoordConf(appPath);
-        String confStr = XmlUtils.writePropToString(conf);
-
-        coordJob.setConf(confStr);
+        Configuration conf = getCoordConf(appPath);
+        coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency(1);
+        coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
@@ -241,10 +240,8 @@ public abstract class XDataTestCase extends XFsTestCase {
         action.setStatus(status);
         action.setActionXml(actionXml);
 
-        Properties conf = getCoordConf(appPath);
-        String createdConf = XmlUtils.writePropToString(conf);
-
-        action.setCreatedConf(createdConf);
+        Configuration conf = getCoordConf(appPath);
+        action.setCreatedConf(XmlUtils.prettyPrint(conf).toString());
         return action;
     }
 
@@ -446,24 +443,24 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
     }
 
-    protected Properties getCoordConf(Path appPath) throws IOException {
-        Path wfAppPath = new Path(getFsTestCaseDir(), "workflow");
-        final OozieClient coordClient = LocalOozie.getCoordClient();
-        Properties conf = coordClient.createConfiguration();
-        conf.setProperty(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
-        conf.setProperty("jobTracker", getJobTrackerUri());
-        conf.setProperty("nameNode", getNameNodeUri());
-        conf.setProperty("wfAppPath", wfAppPath.toString());
-        conf.remove("user.name");
-        conf.setProperty("user.name", getTestUser());
-        injectKerberosInfo(conf);
+    protected Configuration getCoordConf(Path appPath) throws IOException {
+        Path wfAppPath = new Path(getFsTestCaseDir(), "coord");
+
+        Configuration jobConf = new XConfiguration();
+        jobConf.set(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        jobConf.set("jobTracker", getJobTrackerUri());
+        jobConf.set("nameNode", getNameNodeUri());
+        jobConf.set("wfAppPath", wfAppPath.toString());
+        injectKerberosInfo(jobConf);
 
         String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
         content += "<start to='end' />";
         content += "<end name='end' /></workflow-app>";
         writeToFile(content, wfAppPath, "workflow.xml");
 
-        return conf;
+        return jobConf;
     }
 
     private void writeToFile(String content, Path appPath, String fileName) throws IOException {

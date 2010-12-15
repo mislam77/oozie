@@ -16,8 +16,6 @@ package org.apache.oozie.action.ssh;
 
 import org.apache.oozie.service.CallbackService;
 
-import org.apache.oozie.util.PropertiesUtils;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URISyntaxException;
@@ -132,6 +130,7 @@ public class TestSshActionExecutor extends XFsTestCase {
     }
 
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
@@ -354,6 +353,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         }
     }
 
+    @Override
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();

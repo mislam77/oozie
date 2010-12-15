@@ -30,10 +30,13 @@ public class SLAEventsGetForSeqIdCommand implements JPACommand<List<SLAEventBean
 
     private long seqId = 0;
     private int limitLen = 100; // Default
+    private long[] lastSeqId;
 
-    public SLAEventsGetForSeqIdCommand(long seqId, int limitLen) {
+    public SLAEventsGetForSeqIdCommand(long seqId, int limitLen, long[] lastSeqId) {
         this.seqId = seqId;
         this.limitLen = limitLen;
+        this.lastSeqId = lastSeqId;
+        this.lastSeqId[0] = seqId;
     }
 
     @Override
@@ -50,6 +53,9 @@ public class SLAEventsGetForSeqIdCommand implements JPACommand<List<SLAEventBean
             q.setParameter("id", seqId);
             q.setMaxResults(limitLen);
             seBeans = q.getResultList();
+            for (SLAEventBean j : seBeans) {
+                lastSeqId[0] = Math.max(lastSeqId[0], j.getEvent_id());
+            }
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0603, e.getMessage(), e);

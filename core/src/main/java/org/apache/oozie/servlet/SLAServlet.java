@@ -24,32 +24,25 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
-import org.apache.oozie.XException;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.SLAEventsCommand;
-import org.apache.oozie.service.SLAStoreService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.store.SLAStore;
-import org.apache.oozie.store.StoreException;
+import org.apache.oozie.command.coord.SLAEventsXCommand;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 
 public class SLAServlet extends JsonRestServlet {
+    private static final long serialVersionUID = 1L;
+
     private static final String INSTRUMENTATION_NAME = "sla";
 
     private static final JsonRestServlet.ResourceInfo RESOURCES_INFO[] = new JsonRestServlet.ResourceInfo[1];
 
     static {
-        RESOURCES_INFO[0] = new JsonRestServlet.ResourceInfo("", Arrays
-                .asList("GET"), Arrays.asList(
-                new JsonRestServlet.ParameterInfo(
-                        RestConstants.SLA_GT_SEQUENCE_ID, String.class, true,
-                        Arrays.asList("GET")),
-                new JsonRestServlet.ParameterInfo(RestConstants.MAX_EVENTS,
-                                                  String.class, false, Arrays.asList("GET"))));
+        RESOURCES_INFO[0] = new JsonRestServlet.ResourceInfo("", Arrays.asList("GET"), Arrays.asList(
+                new JsonRestServlet.ParameterInfo(RestConstants.SLA_GT_SEQUENCE_ID, String.class, true, Arrays
+                        .asList("GET")), new JsonRestServlet.ParameterInfo(RestConstants.MAX_EVENTS, String.class,
+                        false, Arrays.asList("GET"))));
     }
 
     public SLAServlet() {
@@ -59,26 +52,22 @@ public class SLAServlet extends JsonRestServlet {
     /**
      * Return information about SLA Events.
      */
-    @SuppressWarnings("unchecked")
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         try {
-            String gtSequenceNum = request
-                    .getParameter(RestConstants.SLA_GT_SEQUENCE_ID);
-            String strMaxEvents = request
-                    .getParameter(RestConstants.MAX_EVENTS);
+            String gtSequenceNum = request.getParameter(RestConstants.SLA_GT_SEQUENCE_ID);
+            String strMaxEvents = request.getParameter(RestConstants.MAX_EVENTS);
             int maxNoEvents = 100; // Default
             XLog.getLog(getClass()).debug(
-                    "Got SLA GET request for :" + gtSequenceNum
-                            + " and max-events :" + strMaxEvents);
+                    "Got SLA GET request for :" + gtSequenceNum + " and max-events :" + strMaxEvents);
             if (strMaxEvents != null && strMaxEvents.length() > 0) {
                 maxNoEvents = Integer.parseInt(strMaxEvents);
             }
             if (gtSequenceNum != null) {
                 long seqId = Long.parseLong(gtSequenceNum);
                 stopCron();
-                SLAEventsCommand seCommand = new SLAEventsCommand(seqId, maxNoEvents);
+                SLAEventsXCommand seCommand = new SLAEventsXCommand(seqId, maxNoEvents);
                 List<SLAEventBean> slaEvntList = seCommand.call();
                 long lastSeqId = seCommand.getLastSeqId();
 
@@ -93,14 +82,12 @@ public class SLAServlet extends JsonRestServlet {
                 XLog.getLog(getClass()).debug("Writing back SLA Servlet  Caller with last-seq-id " + lastSeqId);
                 startCron();
                 response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write(
-                        XmlUtils.prettyPrint(eResponse) + "\n");
+                response.getWriter().write(XmlUtils.prettyPrint(eResponse) + "\n");
             }
             else {
-                XLog.getLog(getClass()).error(
-                        "Not implemented witout gt_seq_id");
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST,
-                                            ErrorCode.E0401, "Not implemented without gtSeqID");
+                XLog.getLog(getClass()).error("Not implemented witout gt_seq_id");
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
+                        "Not implemented without gtSeqID");
             }
         }
         catch (CommandException ce) {

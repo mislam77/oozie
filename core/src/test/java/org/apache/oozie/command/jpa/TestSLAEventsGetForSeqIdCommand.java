@@ -50,7 +50,7 @@ public class TestSLAEventsGetForSeqIdCommand extends XDataTestCase {
     private void _testGetSLAEventsForSeqId(String jobId) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        SLAEventsGetForSeqIdCommand slaEventsGetCmd = new SLAEventsGetForSeqIdCommand(0, 10);
+        SLAEventsGetForSeqIdCommand slaEventsGetCmd = new SLAEventsGetForSeqIdCommand(0, 10, new long[1]);
         List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
         assertNotNull(list);
         assertEquals(2, list.size());
