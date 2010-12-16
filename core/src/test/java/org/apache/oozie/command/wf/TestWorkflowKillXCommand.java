@@ -46,11 +46,11 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : kill job and action successfully.
+     * Test : kill RUNNING job and PREP action successfully.
      *
      * @throws Exception
      */
-    public void testWfKillSuccess() throws Exception {
+    public void testWfKillSuccess1() throws Exception {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
@@ -75,7 +75,37 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
     }
+    
+    /**
+     * Test : kill RUNNING job and RUNNING action successfully.
+     *
+     * @throws Exception
+     */
+    public void testWfKillSuccess2() throws Exception {
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        WorkflowJobGetCommand wfJobGetCmd = new WorkflowJobGetCommand(job.getId());
+        WorkflowActionGetCommand wfActionGetCmd = new WorkflowActionGetCommand(action.getId());
+
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
+        assertEquals(job.getStatus(), WorkflowJob.Status.RUNNING);
+        assertEquals(action.getStatus(), WorkflowAction.Status.RUNNING);
+        WorkflowInstance wfInstance = job.getWorkflowInstance();
+        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
+
+        new KillXCommand(job.getId()).call();
+
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
+        assertEquals(job.getStatus(), WorkflowJob.Status.KILLED);
+        assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
+        wfInstance = job.getWorkflowInstance();
+        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
+    }
 
     /**
      * Test : kill job but failed to kill an already successful action.

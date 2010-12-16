@@ -70,7 +70,6 @@ public class KillXCommand extends WorkflowXCommand<Void> {
     protected void loadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
-
             if (jpaService != null) {
                 this.wfJob = jpaService.execute(new WorkflowJobGetCommand(wfId));
                 this.actionList = jpaService.execute(new WorkflowActionsGetForJobCommand(wfId));
@@ -119,7 +118,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                     || action.getStatus() == WorkflowActionBean.Status.DONE) {
                 action.setPending();
                 action.setStatus(WorkflowActionBean.Status.KILLED);
-
+                jpaService.execute(new WorkflowActionUpdateCommand(action));
                 queue(new ActionKillXCommand(action.getId(), action.getType()));
             }
             if (action.getStatus() == WorkflowActionBean.Status.PREP

@@ -45,7 +45,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     private String jobId;
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
-    private final XLog LOG = XLog.getLog(getClass());
+    private final static XLog LOG = XLog.getLog(ActionKillXCommand.class);
     private JPAService jpaService = null;
 
     public ActionKillXCommand(String actionId, String type) {
@@ -90,7 +90,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (!wfAction.isPending() || (wfAction.getStatus() != WorkflowActionBean.Status.KILLED)) {
+        if (wfAction.getStatus() != WorkflowActionBean.Status.KILLED) {
             throw new PreconditionException(ErrorCode.E0726, wfAction.getId());
         }
     }
@@ -99,43 +99,45 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     protected Void execute() throws CommandException {
         LOG.debug("STARTED WorkflowActionKillXCommand for action " + actionId);
 
-        ActionExecutor executor = Services.get().get(ActionService.class).getExecutor(wfAction.getType());
-        if (executor != null) {
-            try {
-                boolean isRetry = false;
-                ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction,
-                        isRetry);
-                incrActionCounter(wfAction.getType(), 1);
+        if (wfAction.isPending()) {
+            ActionExecutor executor = Services.get().get(ActionService.class).getExecutor(wfAction.getType());
+            if (executor != null) {
+                try {
+                    boolean isRetry = false;
+                    ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction,
+                            isRetry);
+                    incrActionCounter(wfAction.getType(), 1);
 
-                Instrumentation.Cron cron = new Instrumentation.Cron();
-                cron.start();
-                executor.kill(context, wfAction);
-                cron.stop();
-                addActionCron(wfAction.getType(), cron);
+                    Instrumentation.Cron cron = new Instrumentation.Cron();
+                    cron.start();
+                    executor.kill(context, wfAction);
+                    cron.stop();
+                    addActionCron(wfAction.getType(), cron);
 
-                wfAction.resetPending();
-                wfAction.setStatus(WorkflowActionBean.Status.KILLED);
+                    wfAction.resetPending();
+                    wfAction.setStatus(WorkflowActionBean.Status.KILLED);
 
-                jpaService.execute(new WorkflowActionUpdateCommand(wfAction));
-                jpaService.execute(new WorkflowJobUpdateCommand(wfJob));
-                // Add SLA status event (KILLED) for WF_ACTION
-                SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.KILLED,
-                        SlaAppType.WORKFLOW_ACTION);
-                queue(new NotificationXCommand(wfJob, wfAction));
-            }
-            catch (ActionExecutorException ex) {
-                wfAction.resetPending();
-                wfAction.setStatus(WorkflowActionBean.Status.FAILED);
-                wfAction.setErrorInfo(ex.getErrorCode().toString(),
-                        "KILL COMMAND FAILED - exception while executing job kill");
-                wfJob.setStatus(WorkflowJobBean.Status.KILLED);
-                jpaService.execute(new WorkflowActionUpdateCommand(wfAction));
-                jpaService.execute(new WorkflowJobUpdateCommand(wfJob));
-                // What will happen to WF and COORD_ACTION, NOTIFICATION?
-                SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
-                        SlaAppType.WORKFLOW_ACTION);
-                XLog.getLog(getClass()).warn("Exception while executing kill(). Error Code [{0}], Message[{1}]",
-                        ex.getErrorCode(), ex.getMessage(), ex);
+                    jpaService.execute(new WorkflowActionUpdateCommand(wfAction));
+                    jpaService.execute(new WorkflowJobUpdateCommand(wfJob));
+                    // Add SLA status event (KILLED) for WF_ACTION
+                    SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.KILLED,
+                            SlaAppType.WORKFLOW_ACTION);
+                    queue(new NotificationXCommand(wfJob, wfAction));
+                }
+                catch (ActionExecutorException ex) {
+                    wfAction.resetPending();
+                    wfAction.setStatus(WorkflowActionBean.Status.FAILED);
+                    wfAction.setErrorInfo(ex.getErrorCode().toString(),
+                            "KILL COMMAND FAILED - exception while executing job kill");
+                    wfJob.setStatus(WorkflowJobBean.Status.KILLED);
+                    jpaService.execute(new WorkflowActionUpdateCommand(wfAction));
+                    jpaService.execute(new WorkflowJobUpdateCommand(wfJob));
+                    // What will happen to WF and COORD_ACTION, NOTIFICATION?
+                    SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
+                            SlaAppType.WORKFLOW_ACTION);
+                    XLog.getLog(getClass()).warn("Exception while executing kill(). Error Code [{0}], Message[{1}]",
+                            ex.getErrorCode(), ex.getMessage(), ex);
+                }
             }
         }
         LOG.debug("ENDED WorkflowActionKillXCommand for action " + actionId);
