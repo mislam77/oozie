@@ -23,6 +23,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
+import org.apache.oozie.command.wf.CompletedActionCommand;
 import org.apache.oozie.command.wf.CompletedActionXCommand;
 import org.apache.oozie.command.wf.DefinitionCommand;
 import org.apache.oozie.command.wf.DefinitionXCommand;
@@ -55,6 +56,7 @@ import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
 import java.io.Writer;
@@ -338,7 +340,14 @@ public class DagEngine extends BaseEngine {
             throws DagEngineException {
         XLog.Info.get().clearParameter(XLogService.GROUP);
         XLog.Info.get().clearParameter(XLogService.USER);
-        XCommand<Void> command = new CompletedActionXCommand(actionId, externalStatus, actionData, HIGH_PRIORITY);
+        XCallable<Void> command = null;
+
+        if (useXCommand) {
+            command = new CompletedActionXCommand(actionId, externalStatus, actionData, HIGH_PRIORITY);
+        }
+        else {
+            command = new CompletedActionCommand(actionId, externalStatus, actionData, HIGH_PRIORITY);
+        }
         if (!Services.get().get(CallableQueueService.class).queue(command)) {
             LOG.warn(XLog.OPS, "queue is full or system is in SAFEMODE, ignoring callback");
         }

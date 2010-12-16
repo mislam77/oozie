@@ -20,7 +20,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
-import org.apache.oozie.command.jpa.CoordActionsGetForJobCommand;
+import org.apache.oozie.command.jpa.CoordJobGetActionsCommand;
 import org.apache.oozie.command.jpa.CoordJobGetCommand;
 import org.apache.oozie.command.jpa.CoordJobUpdateCommand;
 import org.apache.oozie.command.jpa.CoordActionUpdateCommand;
@@ -65,7 +65,7 @@ public class CoordKillXCommand extends CoordinatorXCommand<Void> {
 
             if (jpaService != null) {
                 this.coordJob = jpaService.execute(new CoordJobGetCommand(jobId));
-                this.actionList = jpaService.execute(new CoordActionsGetForJobCommand(jobId));
+                this.actionList = jpaService.execute(new CoordJobGetActionsCommand(jobId));
                 setLogInfo(coordJob);
             }
             else {

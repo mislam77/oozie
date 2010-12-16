@@ -48,11 +48,11 @@ public class TestCoordKillXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : kill job and action successfully
+     * Test : kill job and action (READY) successfully
      *
      * @throws Exception
      */
-    public void testCoordKillSuccess() throws Exception {
+    public void testCoordKillSuccess1() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml");
 
@@ -65,6 +65,33 @@ public class TestCoordKillXCommand extends XDataTestCase {
         action = jpaService.execute(coordActionGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.SUCCEEDED);
         assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
+
+        new CoordKillXCommand(job.getId()).call();
+
+        job = jpaService.execute(coordJobGetCmd);
+        action = jpaService.execute(coordActionGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
+        assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);
+    }
+    
+    /**
+     * Test : kill job and action (RUNNING) successfully
+     *
+     * @throws Exception
+     */
+    public void testCoordKillSuccess2() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
+        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetCommand coordJobGetCmd = new CoordJobGetCommand(job.getId());
+        CoordActionGetCommand coordActionGetCmd = new CoordActionGetCommand(action.getId());
+
+        job = jpaService.execute(coordJobGetCmd);
+        action = jpaService.execute(coordActionGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.SUCCEEDED);
+        assertEquals(action.getStatus(), CoordinatorAction.Status.RUNNING);
 
         new CoordKillXCommand(job.getId()).call();
 
