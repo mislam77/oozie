@@ -26,7 +26,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load the CoordinatorJob into a Bean and return it.
+ * Load a list of CoordinatorAction for a CoordinatorJob and return the list.
  */
 public class CoordJobGetActionsCommand implements JPACommand<List<CoordinatorActionBean>> {
 
@@ -54,12 +54,12 @@ public class CoordJobGetActionsCommand implements JPACommand<List<CoordinatorAct
                 CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
                 actionBeans.add(aa);
             }
-            
+
             return actionBeans;
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0603, e);
-        }        
+        }
     }
 
     private CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {

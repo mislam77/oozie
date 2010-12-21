@@ -79,12 +79,10 @@ public abstract class XDataTestCase extends XFsTestCase {
      * Insert coord job for testing.
      *
      * @param status
-     * @throws IOException
-     * @throws CommandException
      * @return coord job bean
+     * @throws Exception
      */
-    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status) throws CommandException,
-            IOException {
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status);
 
         try {
@@ -113,7 +111,7 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @throws IOException
      */
     protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status)
-            throws IOException {
+            throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath);
 
@@ -187,10 +185,9 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param status
      * @param resourceXmlName
      * @return coord action bean
-     * @throws IOException
-     * @throws CommandException
+     * @throws Exception
      */
-    protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum, CoordinatorAction.Status status, String resourceXmlName) throws CommandException, IOException {
+    protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum, CoordinatorAction.Status status, String resourceXmlName) throws Exception {
         CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName);
 
         try {
@@ -218,7 +215,7 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @throws IOException
      */
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
-            String resourceXmlName) throws IOException {
+            String resourceXmlName) throws Exception {
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, actionNum + "");
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, resourceXmlName);

@@ -52,7 +52,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
     @NamedQuery(name = "GET_WORKFLOWS_COUNT", query = "select count(w) from WorkflowJobBean w"),
 
-    @NamedQuery(name = "GET_COMPLETED_WORKFLOWS_OLDER_THAN", query = "select w from WorkflowJobBean w where w.endTimestamp < :endTime"),
+    @NamedQuery(name = "GET_COMPLETED_WORKFLOWS_OLDER_THAN", query = "select OBJECT(w) from WorkflowJobBean w where w.endTimestamp < :endTime"),
 
     @NamedQuery(name = "GET_WORKFLOW", query = "select OBJECT(w) from WorkflowJobBean w where w.id = :id"),
 

@@ -23,7 +23,6 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.jpa.CoordActionGetCommand;
 import org.apache.oozie.command.jpa.CoordJobGetCommand;
-import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -37,12 +36,10 @@ public class TestCoordKillXCommand extends XDataTestCase {
         services = new Services();
         services.init();
         cleanUpDBTables();
-        LocalOozie.start();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        LocalOozie.stop();
         services.destroy();
         super.tearDown();
     }
@@ -73,7 +70,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
         assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
         assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);
     }
-    
+
     /**
      * Test : kill job and action (RUNNING) successfully
      *

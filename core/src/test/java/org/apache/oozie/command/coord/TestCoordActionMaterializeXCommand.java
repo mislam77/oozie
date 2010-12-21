@@ -101,7 +101,7 @@ public class TestCoordActionMaterializeXCommand extends XDataTestCase {
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime)
-            throws CommandException, IOException {
+            throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status);
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);
@@ -122,7 +122,7 @@ public class TestCoordActionMaterializeXCommand extends XDataTestCase {
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
-            Date pauseTime) throws CommandException, IOException {
+            Date pauseTime) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status);
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);

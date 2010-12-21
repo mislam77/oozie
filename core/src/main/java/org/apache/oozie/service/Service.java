@@ -26,6 +26,11 @@ public interface Service {
     public static final String CONF_PREFIX = "oozie.service.";
 
     /**
+     * Constant for XCommand
+     */
+    public static final String USE_XCOMMAND = "oozie.useXCommand";
+
+    /**
      * Initialize the service. <p/> Invoked by the {@link Service} singleton at start up time.
      *
      * @param services services singleton initializing the service.
