@@ -159,7 +159,7 @@ public enum ErrorCode {
     E1012(XLog.STD, "Coord Job Materialization Error: {0}"),
     E1013(XLog.STD, "Coord Job Recovery Error: {0}"),
     E1014(XLog.STD, "Coord job change command not supported"),
-    E1015(XLog.STD, "Invalid coordinator job change value [{0}], {1}"),
+    E1015(XLog.STD, "Invalid coordinator job change value {0}, {1}"),
     E1016(XLog.STD, "Cannot change a killed coordinator job"),
     E1017(XLog.STD, "Cannot change a workflow job"),
     E1018(XLog.STD, "Coord Job Rerun Error: {0}"),
@@ -184,6 +184,8 @@ public enum ErrorCode {
     E1310(XLog.STD, "Bundle Job submission Error: [{0}]"),
     E1311(XLog.STD, "Bundle Action for bundle ID  [{0}] could not be get."),
     E1312(XLog.STD, "Bundle Job can not be Suspended As job finished or does not exist, {0}, Status: {1}"),
+    E1313(XLog.STD, "Bundle Job can not be Changed as job finished, {0}, Status: {1}"),
+    E1314(XLog.STD, "Bundle Job can not be Changed as job does not exist, {0}"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

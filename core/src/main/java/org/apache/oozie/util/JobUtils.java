@@ -15,13 +15,17 @@
 package org.apache.oozie.util;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -90,5 +94,43 @@ public class JobUtils {
         else if (bundlePathStr != null) {
             conf.set(OozieClient.BUNDLE_APP_PATH, normalizedAppPathStr);
         }
+    }
+    
+    /**
+     * @param changeValue change value.
+     * @throws CommandException thrown if changeValue cannot be parsed properly.
+     */
+    public static Map<String, String> parseChangeValue(String changeValue) throws CommandException {
+        if (changeValue == null || changeValue.trim().equalsIgnoreCase("")) {
+            throw new CommandException(ErrorCode.E1015, "change value can not be empty string or null");
+        }
+        
+        Map<String, String> map = new HashMap<String, String>();
+        
+        String[] tokens = changeValue.split(";");
+        for (String token : tokens) {
+            if (!token.contains("=")) {
+                throw new CommandException(ErrorCode.E1015, changeValue, "change value must be name=value pair or name=(empty string)");
+            }
+
+            String[] pair = token.split("=");
+            String key = pair[0];
+
+            if (map.containsKey(key)) {
+                throw new CommandException(ErrorCode.E1015, changeValue, "can not specify repeated change values on " + key);
+            }
+
+            if (pair.length == 2) {
+                map.put(key, pair[1]);
+            }
+            else if (pair.length == 1) {
+                map.put(key, "");
+            }
+            else {
+                throw new CommandException(ErrorCode.E1015, changeValue, "elements on " + key + " must be name=value pair or name=(empty string)");
+            }
+        }
+        
+        return map;
     }
 }
