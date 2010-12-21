@@ -31,12 +31,13 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.jpa.CoordActionGetCommand;
 import org.apache.oozie.command.jpa.WorkflowJobGetCommand;
 
 public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
     private String actionId;
     private int actionCheckDelay;
-    private static XLog log = XLog.getLog(CoordActionCheckCommand.class);
+    private static XLog LOG = XLog.getLog(CoordActionCheckXCommand.class);
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
 
@@ -46,6 +47,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         this.actionCheckDelay = actionCheckDelay;
     }
 
+    @Override
     protected Void execute() throws CommandException {
         try {
             incrJobCounter(1);
@@ -68,7 +70,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
                         slaStatus = Status.KILLED;
                     }
                     else {
-                        log.warn("Unexpected workflow " + wf.getId() + " STATUS " + wf.getStatus());
+                        LOG.warn("Unexpected workflow " + wf.getId() + " STATUS " + wf.getStatus());
                         coordAction.setLastModifiedTime(new Date());
                         jpaService.execute(new org.apache.oozie.command.jpa.CoordActionUpdateCommand(coordAction));
                         return null;
@@ -76,17 +78,17 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
                 }
             }
 
-            log.debug("Updating Coordintaor actionId :" + coordAction.getId() + "status to =" + coordAction.getStatus());
+            LOG.debug("Updating Coordintaor actionId :" + coordAction.getId() + "status to =" + coordAction.getStatus());
             coordAction.setLastModifiedTime(new Date());
             jpaService.execute(new org.apache.oozie.command.jpa.CoordActionUpdateCommand(coordAction));
 
             if (slaStatus != null) {
                 SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
-                                                SlaAppType.COORDINATOR_ACTION, log);
+                                                SlaAppType.COORDINATOR_ACTION, LOG);
             }
         }
         catch (XException ex) {
-            log.warn("CoordActionCheckCommand Failed ", ex);
+            LOG.warn("CoordActionCheckCommand Failed ", ex);
             throw new CommandException(ex);
         }
         return null;
@@ -94,7 +96,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected String getEntityKey() {
-        return coordAction.getJobId();
+        return actionId;
     }
 
     @Override
@@ -104,11 +106,20 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected void loadState() throws CommandException {
-        jpaService = Services.get().get(JPAService.class);
-        if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);
+        try {
+            jpaService = Services.get().get(JPAService.class);
+
+            if (jpaService != null) {
+                coordAction = jpaService.execute(new CoordActionGetCommand(actionId));
+                setLogInfo(coordAction);
+            }
+            else {
+                throw new CommandException(ErrorCode.E0610);
+            }
         }
-        setLogInfo(coordAction);
+        catch (XException ex) {
+            throw new CommandException(ex);
+        }
     }
 
     @Override

@@ -21,7 +21,6 @@ public class CoordActionInfoXCommand extends CoordinatorXCommand<CoordinatorActi
     public CoordActionInfoXCommand(String id) {
         super("action.info", "action.info", 1);
         this.id = ParamChecker.notEmpty(id, "id");
-        LOG.debug("Command for coordinator action " + id);
     }
 
     /* (non-Javadoc)
