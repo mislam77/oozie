@@ -37,6 +37,8 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
+import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.SLAEventBean;
@@ -553,6 +555,20 @@ public abstract class XTestCase extends TestCase {
             entityManager.remove(w);
         }
 
+        q = entityManager.createNamedQuery("GET_BUNDLE_JOBS");
+        List<BundleJobBean> bjBeans = q.getResultList();
+        int bjSize = bjBeans.size();
+        for (BundleJobBean w : bjBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createNamedQuery("GET_BUNDLE_ACTIONS");
+        List<BundleActionBean> baBeans = q.getResultList();
+        int baSize = baBeans.size();
+        for (BundleActionBean w : baBeans) {
+            entityManager.remove(w);
+        }
+
         q = entityManager.createNamedQuery("GET_SLA_EVENTS");
         List<SLAEventBean> slaBeans = q.getResultList();
         int slaSize = slaBeans.size();
@@ -566,6 +582,8 @@ public abstract class XTestCase extends TestCase {
         log.info(wfaSize + " entries in WF_ACTIONS removed from DB!");
         log.info(cojSize + " entries in COORD_JOBS removed from DB!");
         log.info(coaSize + " entries in COORD_ACTIONS removed from DB!");
+        log.info(bjSize + " entries in BUNDLE_JOBS removed from DB!");
+        log.info(baSize + " entries in BUNDLE_ACTIONS removed from DB!");
         log.info(slaSize + " entries in SLA_EVENTS removed from DB!");
     }
 

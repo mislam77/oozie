@@ -14,6 +14,8 @@
  */
 package org.apache.oozie.command.jpa;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -22,23 +24,20 @@ import javax.persistence.Query;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the list of BundleAction return it.
  */
-public class BundleActionsGetCommand implements JPACommand<List<BundleActionBean>> {
+public class BundleActionsGetByLastModifiedTimeCommand implements JPACommand<List<BundleActionBean>> {
+    private Date d = null;
 
-    private String bundleId = null;
-
-    public BundleActionsGetCommand(String bundleId) {
-        ParamChecker.notNull(bundleId, "bundleId");
-        this.bundleId = bundleId;
+    public BundleActionsGetByLastModifiedTimeCommand(Date d) {
+        this.d = d;
     }
 
     @Override
     public String getName() {
-        return "BundleActionsGetCommand";
+        return "BundleActionsGetByLastModifiedTimeCommand";
     }
 
     @Override
@@ -46,8 +45,8 @@ public class BundleActionsGetCommand implements JPACommand<List<BundleActionBean
     public List<BundleActionBean> execute(EntityManager em) throws CommandException {
         List<BundleActionBean> baBeans;
         try {
-            Query q = em.createNamedQuery("GET_BUNDLE_ACTIONS_FOR_BUNDLE");
-            q.setParameter("bundleId", bundleId);
+            Query q = em.createNamedQuery("GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME");
+            q.setParameter("lastModifiedTime", new Timestamp(d.getTime()));
             baBeans = q.getResultList();
         }
         catch (Exception e) {

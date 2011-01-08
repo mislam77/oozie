@@ -14,46 +14,50 @@
  */
 package org.apache.oozie.command.jpa;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load the list of BundleAction return it.
+ * A list of Bundle Jobs that are matched with the status and have last materialized time' older than
+ * checkAgeSecs will be returned.
  */
-public class BundleActionsGetCommand implements JPACommand<List<BundleActionBean>> {
+public class BundleJobsGetPendingCommand implements JPACommand<List<BundleJobBean>> {
+    private int limit;
 
-    private String bundleId = null;
-
-    public BundleActionsGetCommand(String bundleId) {
-        ParamChecker.notNull(bundleId, "bundleId");
-        this.bundleId = bundleId;
+    public BundleJobsGetPendingCommand(int limit) {
+        this.limit = limit;
     }
 
     @Override
     public String getName() {
-        return "BundleActionsGetCommand";
+        return "BundleJobsGetPendingCommand";
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<BundleActionBean> execute(EntityManager em) throws CommandException {
-        List<BundleActionBean> baBeans;
+    public List<BundleJobBean> execute(EntityManager em) throws CommandException {
+        List<BundleJobBean> bjBeans;
+        List<BundleJobBean> jobList = new ArrayList<BundleJobBean>();
         try {
-            Query q = em.createNamedQuery("GET_BUNDLE_ACTIONS_FOR_BUNDLE");
-            q.setParameter("bundleId", bundleId);
-            baBeans = q.getResultList();
+            Query q = em.createNamedQuery("GET_BUNDLE_JOBS_PENDING");
+            if (limit > 0) {
+                q.setMaxResults(limit);
+            }
+            bjBeans = q.getResultList();
+            for (BundleJobBean j : bjBeans) {
+                jobList.add(j);
+            }
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0603, e);
         }
-
-        return baBeans;
+        return jobList;
     }
 }
