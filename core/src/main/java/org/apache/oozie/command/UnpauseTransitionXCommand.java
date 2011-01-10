@@ -44,7 +44,8 @@ public abstract class UnpauseTransitionXCommand extends TransitionXCommand<Void>
             throw new CommandException(ErrorCode.E1316, job.getId());
         }
 
-        job.setPending();
+        //TODO: to be revisited;
+        //job.setPending();
     }
 
     @Override
