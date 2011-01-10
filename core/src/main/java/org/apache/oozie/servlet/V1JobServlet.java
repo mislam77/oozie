@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.BundleEngine;
 import org.apache.oozie.BundleEngineException;
+import org.apache.oozie.BundleJobInfo;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngineException;
@@ -507,13 +508,27 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private void rerunBundleJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
+        JSONObject json = new JSONObject();
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
                 getAuthToken(request));
         String jobId = getResourceName(request);
+
+        String rerunType = request.getParameter(RestConstants.JOB_COORD_RERUN_TYPE_PARAM);
+        String scope = request.getParameter(RestConstants.JOB_COORD_RERUN_SCOPE_PARAM);
+        String refresh = request.getParameter(RestConstants.JOB_COORD_RERUN_REFRESH_PARAM);
+        String noCleanup = request.getParameter(RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM);
+
+        XLog.getLog(getClass()).info(
+                "Rerun Bundle for jobId=" + jobId + ", rerunType=" + rerunType + ",scope=" + scope + ",refresh="
+                        + refresh + ", noCleanup=" + noCleanup);
+
         try {
-            bundleEngine.reRun(jobId, conf);
+            BundleJobInfo bundleInfo = bundleEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh), Boolean
+                    .valueOf(noCleanup));
+            // json.put(JsonTags.BUNDLE_JOB_ID,
+            // bundleInfo.getBundleJobs().toJSONArray(actions));
         }
-        catch (BundleEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }

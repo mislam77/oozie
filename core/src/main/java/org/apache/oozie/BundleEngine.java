@@ -28,8 +28,11 @@ import org.apache.oozie.command.bundle.BundleJobResumeXCommand;
 import org.apache.oozie.command.bundle.BundleJobSuspendXCommand;
 import org.apache.oozie.command.bundle.BundleJobXCommand;
 import org.apache.oozie.command.bundle.BundleKillXCommand;
+import org.apache.oozie.command.bundle.BundleRerunXCommand;
 import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
+import org.apache.oozie.command.coord.CoordRerunCommand;
+import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
@@ -164,7 +167,29 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#reRun(java.lang.String, org.apache.hadoop.conf.Configuration)
      */
     @Override
+    @Deprecated
     public void reRun(String jobId, Configuration conf) throws BundleEngineException {
+    	throw new BundleEngineException(new XException(ErrorCode.E0301));
+    }
+
+    /**
+     * Rerun Bundle actions for given rerunType
+     *
+     * @param jobId
+     * @param rerunType
+     * @param scope
+     * @param refresh
+     * @param noCleanup
+     * @throws BaseEngineException
+     */
+    public BundleJobInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup)
+            throws BaseEngineException {
+        try {
+            return new BundleRerunXCommand(jobId, rerunType, scope, refresh, noCleanup).call();
+        }
+        catch (CommandException ex) {
+            throw new BaseEngineException(ex);
+        }
     }
 
     /* (non-Javadoc)
