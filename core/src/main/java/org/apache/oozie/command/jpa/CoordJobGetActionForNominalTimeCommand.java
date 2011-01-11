@@ -49,25 +49,20 @@ public class CoordJobGetActionForNominalTimeCommand implements JPACommand<Coordi
     @Override
     @SuppressWarnings("unchecked")
     public CoordinatorActionBean execute(EntityManager em) throws CommandException {
-        try {
-            List<CoordinatorActionBean> actions;
-            Query q = em.createNamedQuery("GET_ACTION_FOR_NOMINALTIME");
-            q.setParameter("jobId", jobId);
-            q.setParameter("nominalTime", new Timestamp(nominalTime.getTime()));
-            actions = q.getResultList();
+        List<CoordinatorActionBean> actions;
+        Query q = em.createNamedQuery("GET_ACTION_FOR_NOMINALTIME");
+        q.setParameter("jobId", jobId);
+        q.setParameter("nominalTime", new Timestamp(nominalTime.getTime()));
+        actions = q.getResultList();
 
-            CoordinatorActionBean action = null;
-            if (actions.size() > 0) {
-                action = actions.get(0);
-            }
-            else {
-                throw new CommandException(ErrorCode.E0605, DateUtils.convertDateToString(nominalTime));
-            }
-            return getBeanForRunningCoordAction(action);
+        CoordinatorActionBean action = null;
+        if (actions.size() > 0) {
+            action = actions.get(0);
         }
-        catch (Exception e) {
-            throw new CommandException(ErrorCode.E0603, e);
-        }       
+        else {
+            throw new CommandException(ErrorCode.E0605, DateUtils.convertDateToString(nominalTime));
+        }
+        return getBeanForRunningCoordAction(action);
     }
 
     private CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {
