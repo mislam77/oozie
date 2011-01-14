@@ -20,7 +20,9 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.command.bundle.BundlePauseXCommand;
+import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleUnpauseXCommand;
+import org.apache.oozie.command.jpa.BundleJobsGetNeedStartCommand;
 import org.apache.oozie.command.jpa.BundleJobsGetPausedCommand;
 import org.apache.oozie.command.jpa.BundleJobsGetUnpausedCommand;
 import org.apache.oozie.service.SchedulerService;
@@ -29,21 +31,20 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.MemoryLocks;
 import org.apache.oozie.util.XLog;
 
-public class PauseUnpauseService implements Service {
-    public static final String CONF_PREFIX = Service.CONF_PREFIX + "PauseUnpauseService.";
-    public static final String CONF_PAUSEUNPAUSE_INTERVAL = CONF_PREFIX + "PauseUnpause.interval";
-    private final static XLog LOG = XLog.getLog(PauseUnpauseService.class);
-    private static int runningInstanceCnt = 0;
+public class BundlePauseStartService implements Service {
+    public static final String CONF_PREFIX = Service.CONF_PREFIX + "BundlePauseStartService.";
+    public static final String CONF_BUNDLE_PAUSE_START_INTERVAL = CONF_PREFIX + "BundlePauseStart.interval";
+    private final static XLog LOG = XLog.getLog(BundlePauseStartService.class);
     
     /**
-     * PauseUnpauseRunnable is the runnable which is scheduled to run at the configured interval; 
-     * It checks all bundles to see if they should be paused or unpaused.
+     * BundlePauseStartRunnable is the runnable which is scheduled to run at the configured interval, 
+     * it checks all bundles to see if they should be paused, unpaused or started.
      */
-    static class PauseUnpauseRunnable implements Runnable {
+    static class BundlePauseStartRunnable implements Runnable {
         private JPAService jpaService = null;
         private MemoryLocks.LockToken lock;
         
-        public PauseUnpauseRunnable() {
+        public BundlePauseStartRunnable() {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService == null) {
                 LOG.error("Missing JPAService");
@@ -52,18 +53,17 @@ public class PauseUnpauseService implements Service {
 
         public void run() {
             try {
-                //first check if there is some other running instance from the same service;
+                Date d = new Date(); // records the start time of this service run;
+                
+                // first check if there is some other running instance from the same service;
                 lock = Services.get().get(MemoryLocksService.class).getWriteLock(CONF_PREFIX, lockTimeout);                
                 if (lock == null) {
-                    LOG.info("This PauseUnpauseService instance will not run since there is already an instance running");
+                    LOG.info("This BundlePauseStartService instance will not run since there is already an instance running");
                 }
                 else {
                     LOG.info("Acquired lock for [{0}]", CONF_PREFIX);
-                    runningInstanceCnt ++;
-                    
-                    Date d = new Date();
-
-                    // pause jobs as needed;
+                     
+                    // pause bundles as needed;
                     List<BundleJobBean> jobList = jpaService.execute(new BundleJobsGetUnpausedCommand(-1));
                     for (BundleJobBean bundleJob : jobList) {
                         if ((bundleJob.getPauseTime() != null) &&  !bundleJob.getPauseTime().after(d)) {
@@ -71,17 +71,24 @@ public class PauseUnpauseService implements Service {
                         }
                     }
 
-                    // unpause jobs as needed;
+                    // unpause bundles as needed;
                     jobList = jpaService.execute(new BundleJobsGetPausedCommand(-1));
                     for (BundleJobBean bundleJob : jobList) {
                         if ((bundleJob.getPauseTime() == null || bundleJob.getPauseTime().after(d))) {
                             (new BundleUnpauseXCommand(bundleJob)).call();
                         }
-                    }   
+                    }
+                    
+                    // start bundles as needed;
+                    jobList = jpaService.execute(new BundleJobsGetNeedStartCommand(d));
+                    for (BundleJobBean bundleJob : jobList) {
+                        bundleJob.setKickoffTime(d);
+                        (new BundleStartXCommand(bundleJob.getId())).call();
+                    }
                 }
             }
             catch (Exception ex) {
-                LOG.warn("Exception happened when (un)pausing bundle jobs", ex);
+                LOG.warn("Exception happened when pausing/unpausing/starting bundle jobs", ex);
             }
             finally {
                 // release lock;
@@ -94,15 +101,15 @@ public class PauseUnpauseService implements Service {
     }
 
     /**
-     * Initializes the {@link PauseUnpauseService}.
+     * Initializes the {@link BundlePauseStartService}.
      *
      * @param services services instance.
      */
     @Override
     public void init(Services services) {
         Configuration conf = services.getConf();
-        Runnable pauseUnpauseRunnable = new PauseUnpauseRunnable();
-        services.get(SchedulerService.class).schedule(pauseUnpauseRunnable, 10, conf.getInt(CONF_PAUSEUNPAUSE_INTERVAL, 60),
+        Runnable bundlePauseStartRunnable = new BundlePauseStartRunnable();
+        services.get(SchedulerService.class).schedule(bundlePauseStartRunnable, 10, conf.getInt(CONF_BUNDLE_PAUSE_START_INTERVAL, 60),
                                                       SchedulerService.Unit.SEC);
     }
 
@@ -116,10 +123,10 @@ public class PauseUnpauseService implements Service {
     /**
      * Return the public interface for the purge jobs service.
      *
-     * @return {@link PauseUnpauseService}.
+     * @return {@link BundlePauseStartService}.
      */
     @Override
     public Class<? extends Service> getInterface() {
-        return PauseUnpauseService.class;
+        return BundlePauseStartService.class;
     }
 }

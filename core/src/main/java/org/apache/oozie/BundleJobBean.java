@@ -49,9 +49,11 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
     @NamedQuery(name = "GET_BUNDLE_JOBS_COUNT", query = "select count(w) from BundleJobBean w"),
 
-    @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.status, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.createdTimestamp, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
+    @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.status, w.user, w.group, w.kickoffTimestamp, w.endTimestamp, w.appPath, w.createdTimestamp, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
 
     @NamedQuery(name = "GET_BUNDLE_JOBS_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.pending = 1 order by w.lastModifiedTimestamp"),
+    
+    @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PREP' and (w.kickoffTimestamp IS NULL OR w.kickoffTimestamp <= :currentTime) order by w.lastModifiedTimestamp"),
     
     @NamedQuery(name = "GET_BUNDLE_JOBS_PAUSED", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PAUSED' OR w.status = 'PAUSEDWITHERROR' OR w.status = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
     

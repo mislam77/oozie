@@ -50,6 +50,7 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.UUIDService.ApplicationType;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -380,6 +381,13 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setGroup(conf.get(OozieClient.GROUP_NAME));
             bundleJob.setConf(XmlUtils.prettyPrint(conf).toString());
             bundleJob.setJobXml(resolvedJobXml);
+            Element jobElement = XmlUtils.parseXml(resolvedJobXml);
+            Element controlsElement = jobElement.getChild("controls", jobElement.getNamespace());
+            Element kickoffTimeElement = controlsElement.getChild("kick-off-time", jobElement.getNamespace());
+            if (kickoffTimeElement != null && !kickoffTimeElement.getValue().isEmpty()) {
+                Date kickoffTime = DateUtils.parseDateUTC(kickoffTimeElement.getValue());
+                bundleJob.setKickoffTime(kickoffTime);
+            }
             bundleJob.setLastModifiedTime(new Date());
 
             if (!dryrun) {
