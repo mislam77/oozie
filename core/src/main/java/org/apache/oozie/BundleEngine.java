@@ -245,6 +245,10 @@ public class BundleEngine extends BaseEngine {
     public String submitJob(Configuration conf, boolean startJob) throws BundleEngineException {
         try {
             String jobId = new BundleSubmitXCommand(conf, getAuthToken()).call();
+            
+            if (startJob) {
+                start(jobId);
+            }
             return jobId;
         }
         catch (CommandException ex) {
