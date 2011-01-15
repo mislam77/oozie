@@ -383,10 +383,12 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setJobXml(resolvedJobXml);
             Element jobElement = XmlUtils.parseXml(resolvedJobXml);
             Element controlsElement = jobElement.getChild("controls", jobElement.getNamespace());
-            Element kickoffTimeElement = controlsElement.getChild("kick-off-time", jobElement.getNamespace());
-            if (kickoffTimeElement != null && !kickoffTimeElement.getValue().isEmpty()) {
-                Date kickoffTime = DateUtils.parseDateUTC(kickoffTimeElement.getValue());
-                bundleJob.setKickoffTime(kickoffTime);
+            if (controlsElement != null) {
+                Element kickoffTimeElement = controlsElement.getChild("kick-off-time", jobElement.getNamespace());
+                if (kickoffTimeElement != null && !kickoffTimeElement.getValue().isEmpty()) {
+                    Date kickoffTime = DateUtils.parseDateUTC(kickoffTimeElement.getValue());
+                    bundleJob.setKickoffTime(kickoffTime);
+                }
             }
             bundleJob.setLastModifiedTime(new Date());
 

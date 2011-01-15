@@ -189,7 +189,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<CoordinatorJob> getCoordinators() {
+    public List<JsonCoordinatorJob> getCoordinators() {
         return (List) coordJobs;
     }
 

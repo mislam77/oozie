@@ -17,6 +17,8 @@ package org.apache.oozie.client;
 
 import java.util.List;
 
+import org.apache.oozie.client.rest.JsonCoordinatorJob;
+
 /**
  * Bean that represents an Oozie bundle.
  */
@@ -48,6 +50,6 @@ public interface BundleJob extends Job {
      *
      * @return the list of CoordinatorJob.
      */
-    List<CoordinatorJob> getCoordinators();
+    List<JsonCoordinatorJob> getCoordinators();
 
 }

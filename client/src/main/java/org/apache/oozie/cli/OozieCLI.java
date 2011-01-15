@@ -689,24 +689,20 @@ public class OozieCLI {
 
         System.out.println(RULER);
 
-        List<CoordinatorJob> coordinators = bundleJob.getCoordinators();
+        List<JsonCoordinatorJob> coordinators = bundleJob.getCoordinators();
         System.out.println("Job Name : " + maskIfNull(bundleJob.getAppName()));
         System.out.println("App Path : " + maskIfNull(bundleJob.getAppPath()));
         System.out.println("Status   : " + bundleJob.getStatus());
         System.out.println(RULER);
 
-        System.out.println("ID" + VERBOSE_DELIMITER + "App Name" + VERBOSE_DELIMITER + "Console URL"
-                + VERBOSE_DELIMITER + "Start Time" + VERBOSE_DELIMITER + "End Time" + VERBOSE_DELIMITER
-                + "Last Action Time" + VERBOSE_DELIMITER + "Status");
+        System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, "Job ID", "Status", "Freq", "Unit",
+                "Started", "Next Materialized"));
         System.out.println(RULER);
 
-        for (CoordinatorJob coordinator : coordinators) {
-            System.out.println(maskIfNull(coordinator.getId()) + VERBOSE_DELIMITER 
-                    + maskIfNull(coordinator.getAppName()) + VERBOSE_DELIMITER 
-                    + maskIfNull(coordinator.getConsoleUrl()) + VERBOSE_DELIMITER
-                    + maskDate(coordinator.getStartTime(), localtime) + VERBOSE_DELIMITER +  maskDate(coordinator.getEndTime(), localtime)
-                    + maskDate(coordinator.getLastActionTime(), localtime)
-                    + coordinator.getStatus()); 
+        for (CoordinatorJob job : coordinators) {
+            System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, maskIfNull(job.getId()), 
+                    job.getStatus(), job.getFrequency(), job.getTimeUnit(), maskDate(job.getStartTime(), localtime), 
+                    maskDate(job.getNextMaterializedTime(), localtime)));
 
             System.out.println(RULER);
         }
@@ -771,6 +767,7 @@ public class OozieCLI {
 
     private static final String WORKFLOW_JOBS_FORMATTER = "%-41s%-13s%-10s%-10s%-10s%-24s%-24s";
     private static final String COORD_JOBS_FORMATTER = "%-41s%-15s%-10s%-5s%-13s%-24s%-24s";
+    private static final String BUNDLE_COORD_JOBS_FORMATTER = "%-41s%-10s%-5s%-13s%-24s%-24s";
 
     private static final String WORKFLOW_ACTION_FORMATTER = "%-78s%-10s%-23s%-11s%-10s";
     private static final String COORD_ACTION_FORMATTER = "%-41s%-10s%-37s%-10s%-17s%-17s";
