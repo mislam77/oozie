@@ -365,6 +365,10 @@ import org.apache.openjpa.persistence.jdbc.Index;
         }
         d = dataInput.readLong();
         if (d != -1) {
+            setStartTime(new Date(d));
+        }
+        d = dataInput.readLong();
+        if (d != -1) {
             setEndTime(new Date(d));
         }
         setUser(WritableUtils.readStr(dataInput));

@@ -158,7 +158,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_EXTERNAL_ID, externalId);
         json.put(JsonTags.COORDINATOR_JOB_CONF, conf);
         json.put(JsonTags.COORDINATOR_JOB_STATUS, getStatus().toString());
-        json.put(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, getExecutionOrder().toString());
+        json.put(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, executionOrder.toString());
         json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, getFrequency());
         json.put(JsonTags.COORDINATOR_JOB_TIMEUNIT, getTimeUnit().toString());
         json.put(JsonTags.COORDINATOR_JOB_TIMEZONE, getTimeZone());
