@@ -151,7 +151,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         this.conf = ParamChecker.notNull(conf, "conf");
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
         this.bundleId = ParamChecker.notEmpty(bundleId, "bundleId");
-        this.coordName = ParamChecker.notEmpty(bundleId, "coordName");
+        this.coordName = ParamChecker.notEmpty(coordName, "coordName");
     }
 
     /**

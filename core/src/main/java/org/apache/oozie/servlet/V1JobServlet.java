@@ -675,7 +675,7 @@ public class V1JobServlet extends BaseJobServlet {
         String jobId = getResourceName(request);
 
         try {
-            JsonBundleJob bundleJob = (JsonBundleJob) bundleEngine.getBundleJob(jobId);
+            JsonBundleJob bundleJob = bundleEngine.getBundleJob(jobId);
             jobBean = bundleJob;
             return jobBean;
         }

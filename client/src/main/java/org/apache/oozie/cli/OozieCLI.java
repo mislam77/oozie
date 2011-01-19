@@ -689,10 +689,11 @@ public class OozieCLI {
 
         System.out.println(RULER);
 
-        List<JsonCoordinatorJob> coordinators = bundleJob.getCoordinators();
+        List<CoordinatorJob> coordinators = bundleJob.getCoordinators();
         System.out.println("Job Name : " + maskIfNull(bundleJob.getAppName()));
         System.out.println("App Path : " + maskIfNull(bundleJob.getAppPath()));
         System.out.println("Status   : " + bundleJob.getStatus());
+        System.out.println("Kickoff time   : " + bundleJob.getKickoffTime());
         System.out.println(RULER);
 
         System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, "Job ID", "Status", "Freq", "Unit",
@@ -701,7 +702,8 @@ public class OozieCLI {
 
         for (CoordinatorJob job : coordinators) {
             System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, maskIfNull(job.getId()), 
-                    job.getStatus(), job.getFrequency(), job.getTimeUnit(), maskDate(job.getStartTime(), localtime), 
+                    job.getStatus(), job.getFrequency(), job.getTimeUnit(),
+                    maskDate(job.getStartTime(), localtime),
                     maskDate(job.getNextMaterializedTime(), localtime)));
 
             System.out.println(RULER);

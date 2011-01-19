@@ -105,7 +105,6 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     /**
      * @param json
      */
-    @SuppressWarnings("unchecked")
     public JsonBundleJob(JSONObject json) {
         appPath = (String) json.get(JsonTags.BUNDLE_JOB_PATH);
         appName = (String) json.get(JsonTags.BUNDLE_JOB_NAME);
@@ -140,13 +139,13 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         json.put(JsonTags.BUNDLE_JOB_STATUS, status.toString());
         json.put(JsonTags.BUNDLE_JOB_TIMEUNIT, timeUnit.toString());
         json.put(JsonTags.BUNDLE_JOB_TIMEOUT, timeOut);
-        json.put(JsonTags.BUNDLE_JOB_KICKOFF_TIME, JsonUtils.formatDateRfc822(kickoffTime));
-        json.put(JsonTags.BUNDLE_JOB_START_TIME, JsonUtils.formatDateRfc822(startTime));
-        json.put(JsonTags.BUNDLE_JOB_END_TIME, JsonUtils.formatDateRfc822(endTime));
-        json.put(JsonTags.BUNDLE_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(pauseTime));
-        json.put(JsonTags.BUNDLE_JOB_USER, user);
-        json.put(JsonTags.BUNDLE_JOB_GROUP, group);
-        json.put(JsonTags.BUNDLE_JOB_CONSOLE_URL, consoleUrl);
+        json.put(JsonTags.BUNDLE_JOB_KICKOFF_TIME, JsonUtils.formatDateRfc822(getKickoffTime()));
+        json.put(JsonTags.BUNDLE_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime()));
+        json.put(JsonTags.BUNDLE_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
+        json.put(JsonTags.BUNDLE_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime()));
+        json.put(JsonTags.BUNDLE_JOB_USER, getUser());
+        json.put(JsonTags.BUNDLE_JOB_GROUP, getGroup());
+        json.put(JsonTags.BUNDLE_JOB_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.BUNDLE_COORDINATOR_JOBS, JsonCoordinatorJob.toJSONArray(coordJobs));
 
         return json;
@@ -189,7 +188,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<JsonCoordinatorJob> getCoordinators() {
+    public List<CoordinatorJob> getCoordinators() {
         return (List) coordJobs;
     }
 

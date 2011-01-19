@@ -44,8 +44,8 @@ public class TestStatusTransitService extends XDataTestCase {
         super.tearDown();
     }
     
-    private BundleActionBean addRecordToBundleActionTable(String jobId, String actionId, int pending) throws Exception {
-        BundleActionBean action = createBundleAction(jobId, actionId, pending);
+    private BundleActionBean addRecordToBundleActionTable(String jobId, String actionId, int pending, Job.Status status) throws Exception {
+        BundleActionBean action = createBundleAction(jobId, actionId, pending, status);
         
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -62,14 +62,14 @@ public class TestStatusTransitService extends XDataTestCase {
         return action;
     }
 
-    private BundleActionBean createBundleAction(String jobId, String actionId, int pending) throws Exception {
+    private BundleActionBean createBundleAction(String jobId, String actionId, int pending, Job.Status status) throws Exception {
         BundleActionBean action = new BundleActionBean();
         action.setBundleId(jobId);
         action.setBundleActionId(actionId);
         action.setPending(pending);
         action.setCoordId("1");
         action.setCoordName("abc");
-        action.setStatus(Job.Status.PAUSED);        
+        action.setStatus(status);        
         action.setLastModifiedTime(new Date());
         
         return action;
@@ -89,9 +89,9 @@ public class TestStatusTransitService extends XDataTestCase {
         jpaService.execute(new BundleJobUpdateCommand(job));
         
         final String jobId = job.getId(); 
-        addRecordToBundleActionTable(jobId, "1", 0);
-        addRecordToBundleActionTable(jobId, "2", 0);
-        addRecordToBundleActionTable(jobId, "3", 0);
+        addRecordToBundleActionTable(jobId, "1", 0, Job.Status.PAUSED);
+        addRecordToBundleActionTable(jobId, "2", 0, Job.Status.PAUSED);
+        addRecordToBundleActionTable(jobId, "3", 0, Job.Status.PAUSED);
         
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -119,9 +119,9 @@ public class TestStatusTransitService extends XDataTestCase {
         jpaService.execute(new BundleJobUpdateCommand(job));
         
         final String jobId = job.getId(); 
-        addRecordToBundleActionTable(jobId, "1", 1);
-        addRecordToBundleActionTable(jobId, "2", 1);
-        addRecordToBundleActionTable(jobId, "3", 2);
+        addRecordToBundleActionTable(jobId, "1", 1, Job.Status.PAUSED);
+        addRecordToBundleActionTable(jobId, "2", 1, Job.Status.PAUSED);
+        addRecordToBundleActionTable(jobId, "3", 2, Job.Status.PAUSED);
         
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -149,9 +149,9 @@ public class TestStatusTransitService extends XDataTestCase {
         jpaService.execute(new BundleJobUpdateCommand(job));
         
         final String jobId = job.getId(); 
-        addRecordToBundleActionTable(jobId, "1", 0);
-        addRecordToBundleActionTable(jobId, "2", 1);
-        addRecordToBundleActionTable(jobId, "3", 2);
+        addRecordToBundleActionTable(jobId, "1", 0, Job.Status.PAUSED);
+        addRecordToBundleActionTable(jobId, "2", 1, Job.Status.PAUSED);
+        addRecordToBundleActionTable(jobId, "3", 2, Job.Status.PAUSED);
         
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -162,5 +162,32 @@ public class TestStatusTransitService extends XDataTestCase {
         
         job = jpaService.execute(new BundleJobGetCommand(jobId));
         assertEquals(job.getPending(), 1);
+    }
+    
+    /**
+     * Test : not all bundle actions are succeeded - bundle job's status will be updated to succeeded.
+     *
+     * @throws Exception
+     */
+    public void testStatusTransitService4() throws Exception {
+        cleanUpDBTables();
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);        
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+                
+        final String jobId = job.getId(); 
+        addRecordToBundleActionTable(jobId, "1", 0, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(jobId, "2", 1, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(jobId, "3", 2, Job.Status.SUCCEEDED);
+        
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean job1 = jpaService.execute(new BundleJobGetCommand(jobId));
+                return job1.getStatus() == Job.Status.SUCCEEDED;
+            }
+        });
+        
+        job = jpaService.execute(new BundleJobGetCommand(jobId));
+        assertEquals(job.getStatus(), Job.Status.SUCCEEDED);
     }
 }

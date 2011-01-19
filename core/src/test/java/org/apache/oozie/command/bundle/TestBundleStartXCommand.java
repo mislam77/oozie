@@ -74,11 +74,11 @@ public class TestBundleStartXCommand extends XDataTestCase {
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetCmd);
 
         assertEquals(2, actions.size());
-        assertEquals(Job.Status.PREP, actions.get(0).getStatus());
+        assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
         assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(0).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
-        assertEquals(Job.Status.PREP, actions.get(1).getStatus());
+        assertEquals(Job.Status.RUNNING, actions.get(1).getStatus());
         assertEquals(true, actions.get(1).isPending());
         assertEquals(false, actions.get(1).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
@@ -123,11 +123,11 @@ public class TestBundleStartXCommand extends XDataTestCase {
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetCmd);
 
         assertEquals(2, actions.size());
-        assertEquals(Job.Status.PREP, actions.get(0).getStatus());
+        assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
         assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(0).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
-        assertEquals(Job.Status.PREP, actions.get(1).getStatus());
+        assertEquals(Job.Status.RUNNING, actions.get(1).getStatus());
         assertEquals(true, actions.get(1).isPending());
         assertEquals(false, actions.get(1).isCritical());
         assertEquals(job.getId(), actions.get(1).getBundleId());
@@ -156,11 +156,11 @@ public class TestBundleStartXCommand extends XDataTestCase {
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetCmd);
 
         assertEquals(2, actions.size());
-        assertEquals(Job.Status.PREP, actions.get(0).getStatus());
+        assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
         assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(0).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
-        assertEquals(Job.Status.PREP, actions.get(1).getStatus());
+        assertEquals(Job.Status.RUNNING, actions.get(1).getStatus());
         assertEquals(true, actions.get(1).isPending());
         assertEquals(false, actions.get(1).isCritical());
         assertEquals(job.getId(), actions.get(1).getBundleId());

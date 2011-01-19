@@ -24,20 +24,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.jpa.CoordActionInsertCommand;
 import org.apache.oozie.command.jpa.CoordJobGetCommand;
-import org.apache.oozie.command.jpa.CoordJobInsertCommand;
 import org.apache.oozie.command.jpa.CoordJobUpdateCommand;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
@@ -248,6 +246,12 @@ public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
         if (jobEndTime.compareTo(endTime) <= 0) {
             job.setStatus(CoordinatorJob.Status.SUCCEEDED);
             log.info("[" + job.getId() + "]: Update status from PREMATER to SUCCEEDED");
+            
+            //update bundle action
+            if (job.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(job, CoordinatorJob.Status.PREMATER);
+                bundleStatusUpdate.call();
+            }
         }
         else {
             job.setStatus(CoordinatorJob.Status.RUNNING);

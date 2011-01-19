@@ -94,7 +94,7 @@ public class BundleEngine extends BaseEngine {
         throw new BundleEngineException(new XException(ErrorCode.E0301));
     }
 
-    public BundleJob getBundleJob(String jobId) throws BundleEngineException {
+    public BundleJobBean getBundleJob(String jobId) throws BundleEngineException {
         try {
             return new BundleJobXCommand(jobId).call();
         }

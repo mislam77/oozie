@@ -179,7 +179,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         action.setBundleActionId(jobId + "_" + coordName);
         action.setBundleId(jobId);
         action.setCoordName(coordName);
-        action.setStatus(Job.Status.PREP);
+        action.setStatus(Job.Status.RUNNING);
         action.setLastModifiedTime(new Date());
         if (isCritical) {
             action.setCritical();

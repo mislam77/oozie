@@ -50,6 +50,6 @@ public interface BundleJob extends Job {
      *
      * @return the list of CoordinatorJob.
      */
-    List<JsonCoordinatorJob> getCoordinators();
+    List<CoordinatorJob> getCoordinators();
 
 }

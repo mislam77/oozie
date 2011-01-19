@@ -23,11 +23,13 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.command.jpa.BundleActionsGetByLastModifiedTimeCommand;
 import org.apache.oozie.command.jpa.BundleActionsGetCommand;
 import org.apache.oozie.command.jpa.BundleJobGetCommand;
 import org.apache.oozie.command.jpa.BundleJobUpdateCommand;
 import org.apache.oozie.command.jpa.BundleJobsGetPendingCommand;
+import org.apache.oozie.command.jpa.BundleJobsGetRunningCommand;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
@@ -69,25 +71,29 @@ public class StatusTransitService implements Service {
                 else {
                     LOG.info("Acquired lock for [{0}]", CONF_PREFIX);
                     
-                    List<BundleJobBean> jobList = null;
+                    List<BundleJobBean> pendingJobCheckList = null;
+                    List<BundleJobBean> runningJobCheckList = null;
                     if (lastInstanceStartTime == null) { // this is the first instance, we need to check for all pending jobs;
-                        jobList = jpaService.execute(new BundleJobsGetPendingCommand(limit));                    
+                        pendingJobCheckList = jpaService.execute(new BundleJobsGetPendingCommand(limit));
+                        runningJobCheckList = jpaService.execute(new BundleJobsGetRunningCommand(limit));
                     }
                     else { // this is not the first instance, we should only check jobs that have actions been 
                            // updated >= start time of last service run;
-                        List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetByLastModifiedTimeCommand(lastInstanceStartTime));                        
+                        List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetByLastModifiedTimeCommand(lastInstanceStartTime));
                         Set<String> bundleIds = new HashSet<String>();
                         for (BundleActionBean action : actionList) {
                             bundleIds.add(action.getBundleId());
                         }
-                        jobList = new ArrayList<BundleJobBean>();
+                        pendingJobCheckList = new ArrayList<BundleJobBean>();
                         for (String bundleId : bundleIds.toArray(new String[bundleIds.size()])) {
                             BundleJobBean bundle = jpaService.execute(new BundleJobGetCommand(bundleId));
-                            jobList.add(bundle);
+                            pendingJobCheckList.add(bundle);
                         }
+                        
+                        runningJobCheckList = pendingJobCheckList;
                     }
                     
-                    for (BundleJobBean bundleJob : jobList) {
+                    for (BundleJobBean bundleJob : pendingJobCheckList) {
                         String jobId = bundleJob.getId();
                         List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetCommand(jobId));
                         if (checkAllBundleActionsDone(actionList)) {
@@ -95,7 +101,16 @@ public class StatusTransitService implements Service {
                             jpaService.execute(new BundleJobUpdateCommand(bundleJob));
                         }
                     }
-                    
+
+                    for (BundleJobBean bundleJob : runningJobCheckList) {
+                        String jobId = bundleJob.getId();
+                        List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetCommand(jobId));
+                        if (checkAllBundleActionsSucceeded(actionList)) {
+                            bundleJob.setStatus(Job.Status.SUCCEEDED);
+                            jpaService.execute(new BundleJobUpdateCommand(bundleJob));
+                        }
+                    }
+
                     lastInstanceStartTime = d;
                 }
             }
@@ -110,7 +125,7 @@ public class StatusTransitService implements Service {
                 }                
             }
         }
-        
+
         private boolean checkAllBundleActionsDone(List<BundleActionBean> actionList) {
             boolean done = true;
             for (BundleActionBean action : actionList) {
@@ -121,6 +136,18 @@ public class StatusTransitService implements Service {
             }
             
             return done;
+        }
+        
+        private boolean checkAllBundleActionsSucceeded(List<BundleActionBean> actionList) {
+            boolean succeeded = true;
+            for (BundleActionBean action : actionList) {
+                if (action.getStatus() != Job.Status.SUCCEEDED) {
+                    succeeded = false;
+                    break;
+                }
+            }
+            
+            return succeeded;
         }
     }
 
