@@ -120,6 +120,18 @@ public abstract class BaseJobServlet extends JsonRestServlet {
                 response.setStatus(HttpServletResponse.SC_OK);
             }
         }
+        else if (action.equals(RestConstants.JOB_BUNDLE_ACTION_RERUN)) {
+            validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+            stopCron();
+            JSONObject json = reRunJob(request, response, null);
+            startCron();
+            if (json != null) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
+            else {
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
+        }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                     RestConstants.ACTION_PARAM, action);

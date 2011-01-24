@@ -32,16 +32,15 @@ public class TestBundleRerunXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleRerun1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         BundleJobGetCommand bundleJobGetCmd = new BundleJobGetCommand(job.getId());
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(job.getStatus(), Job.Status.PREP);
+        assertEquals(job.getStatus(), Job.Status.SUCCEEDED);
 
-        new BundleRerunXCommand(job.getId(), RestConstants.JOB_COORD_RERUN_DATE, "2009-12-15T01:00Z", false, true)
-                .call();
+        new BundleRerunXCommand(job.getId(), RestConstants.JOB_COORD_RERUN_DATE, "2009-12-15T01:00Z", false, true).call();
 
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.RUNNING);

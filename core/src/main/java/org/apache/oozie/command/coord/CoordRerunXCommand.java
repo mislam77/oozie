@@ -37,6 +37,7 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.jpa.CoordActionGetCommand;
 import org.apache.oozie.command.jpa.CoordJobGetActionForNominalTimeCommand;
 import org.apache.oozie.command.jpa.CoordJobGetActionsForDatesCommand;
@@ -121,6 +122,13 @@ public class CoordRerunXCommand extends CoordinatorXCommand<CoordinatorActionInf
         }
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E1018, ex);
+        }
+        finally {
+            //update bundle action
+            if (coordJob.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, coordJob.getStatus());
+                bundleStatusUpdate.call();
+            }   
         }
     }
 

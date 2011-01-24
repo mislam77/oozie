@@ -105,6 +105,7 @@ public class OozieCLI {
     public static final String LOCAL_TIME_OPTION = "localtime";
     public static final String QUEUE_DUMP_OPTION = "queuedump";
     public static final String RERUN_ACTION_OPTION = "action";
+    public static final String RERUN_COORD_OPTION = "coordinator";
     public static final String RERUN_DATE_OPTION = "date";
     public static final String RERUN_REFRESH_OPTION = "refresh";
     public static final String RERUN_NOCLEANUP_OPTION = "nocleanup";
@@ -183,7 +184,7 @@ public class OozieCLI {
         Option submit = new Option(SUBMIT_OPTION, false, "submit a job (requires -config)");
         Option run = new Option(RUN_OPTION, false, "run a job    (requires -config)");
         Option rerun = new Option(RERUN_OPTION, true,
-        "rerun a job  (workflow requires -config, coordinator requires -action or -date)");
+        "rerun a job  (workflow requires -config, coordinator requires -action or -date, bundle requires -coordinator or -date)");
         Option dryrun = new Option(DRYRUN_OPTION, false,
         "Supported in Oozie-2.0 or later versions ONLY - dryrun or test run a coordinator job (requires -config) - job is not queued");
         Option start = new Option(START_OPTION, true, "start a job");
@@ -200,7 +201,8 @@ public class OozieCLI {
         Option definition = new Option(DEFINITION_OPTION, true, "job definition");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
         Option rerun_action = new Option(RERUN_ACTION_OPTION, true, "coordinator rerun on action ids (requires -rerun)");
-        Option rerun_date = new Option(RERUN_DATE_OPTION, true, "coordinator rerun on action dates (requires -rerun)");
+        Option rerun_date = new Option(RERUN_DATE_OPTION, true, "coordinator/bundle rerun on action dates (requires -rerun)");
+        Option rerun_coord = new Option(RERUN_COORD_OPTION, true, "bundle rerun on coordinator names (requires -rerun)");
         Option rerun_refresh = new Option(RERUN_REFRESH_OPTION, false,
         "re-materialize the coordinator rerun actions (requires -rerun)");
         Option rerun_nocleanup = new Option(RERUN_NOCLEANUP_OPTION, false,
@@ -230,6 +232,7 @@ public class OozieCLI {
         jobOptions.addOption(len);
         jobOptions.addOption(rerun_action);
         jobOptions.addOption(rerun_date);
+        jobOptions.addOption(rerun_coord);
         jobOptions.addOption(rerun_refresh);
         jobOptions.addOption(rerun_nocleanup);
         jobOptions.addOptionGroup(actions);
@@ -561,7 +564,41 @@ public class OozieCLI {
             else if (options.contains(RERUN_OPTION)) {
                 if (commandLine.getOptionValue(RERUN_OPTION).contains("-W")) {
                     wc.reRun(commandLine.getOptionValue(RERUN_OPTION), getConfiguration(commandLine));
-                } else {
+                } else if (commandLine.getOptionValue(RERUN_OPTION).contains("-B")) {
+                    String bundleJobId = commandLine.getOptionValue(RERUN_OPTION);
+                    String coordScope = null;
+                    String dateScope = null;
+                    boolean refresh = false;
+                    boolean noCleanup = false;
+                    
+                    if (options.contains(RERUN_DATE_OPTION)){
+                        dateScope = commandLine.getOptionValue(RERUN_DATE_OPTION);
+                    }
+                    else {
+                        throw new OozieCLIException("Must provide date range for bundle rerun");
+                    }
+                    
+                    if (options.contains(RERUN_COORD_OPTION)) {
+                        coordScope = commandLine.getOptionValue(RERUN_COORD_OPTION);
+                    }
+                    
+                    if (options.contains(RERUN_REFRESH_OPTION)) {
+                        refresh = true;
+                    }
+                    if (options.contains(RERUN_NOCLEANUP_OPTION)) {
+                        noCleanup = true;
+                    }
+                    wc.reRunBundle(bundleJobId, coordScope, dateScope, refresh, noCleanup);
+                    if (coordScope != null && !coordScope.isEmpty()) {
+                        System.out.println("Coordinators [" + coordScope + "] of bundle " + bundleJobId + " are scheduled to rerun on date ranges [" 
+                                + dateScope + "].");
+                    }
+                    else {
+                        System.out.println("All coordinators of bundle " + bundleJobId + " are scheduled to rerun on the date ranges [" 
+                                + dateScope + "].");
+                    }
+                }
+                else {
                     String coordJobId = commandLine.getOptionValue(RERUN_OPTION);
                     String scope = null;
                     String rerunType = null;
@@ -588,7 +625,7 @@ public class OozieCLI {
                     if (options.contains(RERUN_NOCLEANUP_OPTION)) {
                         noCleanup = true;
                     }
-                    printRerunCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup));
+                    printRerunCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup));                    
                 }
             }
             else if (options.contains(INFO_OPTION)) {

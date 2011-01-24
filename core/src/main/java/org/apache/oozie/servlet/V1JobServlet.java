@@ -513,20 +513,17 @@ public class V1JobServlet extends BaseJobServlet {
                 getAuthToken(request));
         String jobId = getResourceName(request);
 
-        String rerunType = request.getParameter(RestConstants.JOB_COORD_RERUN_TYPE_PARAM);
-        String scope = request.getParameter(RestConstants.JOB_COORD_RERUN_SCOPE_PARAM);
+        String coordScope = request.getParameter(RestConstants.JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM);
+        String dateScope = request.getParameter(RestConstants.JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM);
         String refresh = request.getParameter(RestConstants.JOB_COORD_RERUN_REFRESH_PARAM);
         String noCleanup = request.getParameter(RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM);
 
         XLog.getLog(getClass()).info(
-                "Rerun Bundle for jobId=" + jobId + ", rerunType=" + rerunType + ",scope=" + scope + ",refresh="
+                "Rerun Bundle for jobId=" + jobId + ", coordScope=" + coordScope + ", dateScope=" + dateScope + ", refresh="
                         + refresh + ", noCleanup=" + noCleanup);
 
         try {
-            BundleJobInfo bundleInfo = bundleEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh), Boolean
-                    .valueOf(noCleanup));
-            // json.put(JsonTags.BUNDLE_JOB_ID,
-            // bundleInfo.getBundleJobs().toJSONArray(actions));
+            bundleEngine.reRun(jobId, coordScope, dateScope, Boolean.valueOf(refresh), Boolean.valueOf(noCleanup));
         }
         catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);

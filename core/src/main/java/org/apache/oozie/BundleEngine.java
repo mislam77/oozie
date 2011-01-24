@@ -176,16 +176,16 @@ public class BundleEngine extends BaseEngine {
      * Rerun Bundle actions for given rerunType
      *
      * @param jobId
-     * @param rerunType
-     * @param scope
+     * @param coordScope
+     * @param dateScope
      * @param refresh
      * @param noCleanup
      * @throws BaseEngineException
      */
-    public BundleJobInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup)
+    public void reRun(String jobId, String coordScope, String dateScope, boolean refresh, boolean noCleanup)
             throws BaseEngineException {
         try {
-            return new BundleRerunXCommand(jobId, rerunType, scope, refresh, noCleanup).call();
+            new BundleRerunXCommand(jobId, coordScope, dateScope, refresh, noCleanup).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);

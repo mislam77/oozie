@@ -933,6 +933,30 @@ public class OozieClient {
             return null;
         }
     }
+    
+    private class BundleRerun extends ClientCallable<Void> {
+
+        BundleRerun(String jobId, String coordScope, String dateScope, boolean refresh, boolean noCleanup) {
+            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_BUNDLE_ACTION_RERUN, RestConstants.JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM, coordScope,
+                    RestConstants.JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM, dateScope, RestConstants.JOB_COORD_RERUN_REFRESH_PARAM,
+                    Boolean.toString(refresh), RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM, Boolean
+                    .toString(noCleanup)));
+        }
+
+        @Override
+        protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                return null;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
 
     /**
      * Rerun coordinator actions.
@@ -948,6 +972,22 @@ public class OozieClient {
             boolean noCleanup) throws OozieClientException {
         return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup).call();
     }
+    
+    /**
+     * Rerun bundle coordinators.
+     *
+     * @param jobId bundle jobId
+     * @param coordScope rerun scope for coordinator jobs
+     * @param dateScope rerun scope for date
+     * @param refresh true if -refresh is given in command option
+     * @param noCleanup true if -nocleanup is given in command option
+     * @throws OozieClientException
+     */
+    public Void reRunBundle(String jobId, String coordScope, String dateScope, boolean refresh,
+            boolean noCleanup) throws OozieClientException {
+        return new BundleRerun(jobId, coordScope, dateScope, refresh, noCleanup).call();
+    }
+
 
     /**
      * Return the info of the workflow jobs that match the filter.
