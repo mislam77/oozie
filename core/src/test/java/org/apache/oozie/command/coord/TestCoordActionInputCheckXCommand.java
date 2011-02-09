@@ -45,14 +45,14 @@ public class TestCoordActionInputCheckXCommand extends CoordXTestCase {
         new CoordActionInputCheckXCommand(jobId + "@1").call();
         checkCoordAction(jobId + "@1");
     }
-
+    
     private void addRecordToJobTable(String jobId) throws CommandException {
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(jobId);
         coordJob.setAppName("testApp");
         coordJob.setAppPath("testAppPath");
         coordJob.setStatus(CoordinatorJob.Status.PREMATER);
-        coordJob.setCreatedTime(new Date()); // TODO: Do we need that?
+        coordJob.setCreatedTime(new Date());
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
@@ -118,18 +118,10 @@ public class TestCoordActionInputCheckXCommand extends CoordXTestCase {
             coordJob.setStartTime(DateUtils.parseDateUTC("2009-02-01T23:59Z"));
         }
         catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
-            // store.closeTrx();
             fail("Could not set Date/time");
         }
 
-
-        /*
-        store.beginTrx();
-        store.insertCoordinatorJob(coordJob);
-        store.commitTrx();
-        */
         JPAService jpaService = Services.get().get(JPAService.class);
         if (jpaService != null) {
             jpaService.execute(new CoordJobInsertCommand(coordJob));
